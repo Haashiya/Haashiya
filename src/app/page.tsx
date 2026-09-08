@@ -24,8 +24,8 @@ export default function Home() {
           }}>
             <ServiceCard title="معرض الأرشيف" href="#" />
             <ServiceCard title="المكتبة الرقمية" href="#" />
-            <ServiceCard title="التعلم المدعوم بالذكاء الاصطناعي" href="#" />
             <ServiceCard title="المواد التعليمية" href="#" />
+            <ServiceCard title="التعلم المدعوم بالذكاء الاصطناعي" href="#" />
           </div>
         </section>
 

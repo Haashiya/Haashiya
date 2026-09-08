@@ -16,8 +16,7 @@ export default function ServiceCard({ title, href }: ServiceCardProps) {
     }}>
       <div style={{
         height: '90px',
-        backgroundColor: '#e2e8f0', 
-        backgroundImage: 'linear-gradient(to bottom, transparent, rgba(19, 89, 200, 0.7) 90%), url(https://images.unsplash.com/photo-1555661530-68c8e98db4e6?auto=format&fit=crop&q=80&w=400)',
+        background: 'linear-gradient(to bottom, rgba(15, 69, 155, 0.6), rgba(19, 89, 200, 0.85) 90%), linear-gradient(135deg, #4a90d9 0%, #1359c8 50%, #0f459b 100%)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }} />

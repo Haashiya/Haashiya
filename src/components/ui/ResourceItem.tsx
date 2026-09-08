@@ -8,6 +8,8 @@ interface ResourceItemProps {
 }
 
 export default function ResourceItem({ title, meta, badgeType, href = '#' }: ResourceItemProps) {
+  const isCalendar = badgeType === 'CALENDAR';
+
   return (
     <Link href={href} style={{
       display: 'flex',
@@ -15,22 +17,22 @@ export default function ResourceItem({ title, meta, badgeType, href = '#' }: Res
       alignItems: 'center',
       backgroundColor: 'var(--color-surface)',
       padding: '14px 20px',
-      marginBottom: '8px',
       clipPath: 'polygon(20px 0, 100% 0, 100% 100%, 0 100%)',
-      position: 'relative'
+      position: 'relative',
+      ...(isCalendar ? { borderInlineEnd: '7px solid var(--color-primary-500)' } : {})
     }}>
-      {/* Visual Kanan karena RTL = Badge */}
-      <div style={{
-        width: '44px',
-        height: '44px',
-        backgroundColor: badgeType === 'CALENDAR' ? 'transparent' : 'var(--color-primary-500)',
-        borderRadius: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0
-      }}>
-        {badgeType !== 'CALENDAR' ? (
+      {/* Badge — only for PDF/DOCX types */}
+      {!isCalendar && (
+        <div style={{
+          width: '44px',
+          height: '44px',
+          backgroundColor: 'var(--color-primary-500)',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0
+        }}>
           <span className="font-latin" style={{
             color: 'var(--color-white-text)',
             fontSize: '11px',
@@ -38,22 +40,13 @@ export default function ResourceItem({ title, meta, badgeType, href = '#' }: Res
           }}>
             {badgeType}
           </span>
-        ) : (
-          <div style={{
-            position: 'absolute',
-            right: 0, // In RTL, right is visual right
-            top: 0,
-            bottom: 0,
-            width: '8px',
-            backgroundColor: 'var(--color-primary-500)'
-          }} />
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Visual Kiri = Teks */}
-      <div style={{ flexGrow: 1, marginInlineStart: '16px', textAlign: 'right' }}>
+      {/* Text content */}
+      <div style={{ flexGrow: 1, marginInlineStart: isCalendar ? '0' : '16px', textAlign: 'right' }}>
         <h3 className="text-h3" style={{ color: 'var(--color-ink)' }}>{title}</h3>
-        <p className="text-meta font-latin" style={{ color: 'var(--color-stone)' }} dir="auto">{meta}</p>
+        <p className="text-meta" style={{ color: 'var(--color-stone)' }} dir="auto">{meta}</p>
       </div>
     </Link>
   );
