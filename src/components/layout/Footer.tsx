@@ -22,7 +22,7 @@ export default function Footer() {
         موقع إلكتروني غير ربحي يهدف إلى تلبية احتياجات التعلم<br />لطلاب برنامج الأدب العربي في LIPIA (الدفعة التاسعة عشرة)
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '14px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', alignItems: 'flex-start', lineHeight: 1.3 }}>
         <span style={{ display: 'flex', gap: '4px', justifyContent: 'flex-start', alignItems: 'center' }}>
           <span style={{ fontWeight: 650 }}>من تطوير</span>
           <span dir="ltr" className="font-latin">@iqlbaihaqi_</span>
