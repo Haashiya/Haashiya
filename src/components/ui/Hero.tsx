@@ -22,9 +22,9 @@ export default function Hero() {
         marginTop: '40px',
         backgroundColor: 'var(--color-surface)',
         color: 'var(--color-primary-600)',
-        borderRadius: '8px',
+        borderRadius: '10px',
         padding: '8px 8px',
-        fontSize: '18px',
+        fontSize: '20px',
         display: 'flex',
         alignItems: 'center',
         gap: '6px',
@@ -32,9 +32,9 @@ export default function Hero() {
 
       }}>
         <span>ادرس الآن</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square">
           <path d="M19 12H5"></path>
-          <path d="M12 19l-7-7 7-7"></path>
+          <path d="M11 19l-7-7 7-7"></path>
         </svg>
       </button>
     </section>
