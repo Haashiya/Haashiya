@@ -3,7 +3,7 @@ import Image from 'next/image';
 export default function Navbar() {
   return (
     <nav style={{
-      height: '90px',
+      height: '72px',
       backgroundColor: 'var(--color-surface)',
       padding: '0 20px',
       display: 'flex',
@@ -17,38 +17,45 @@ export default function Navbar() {
         <Image
           src="/images/navbar_logo.png"
           alt="حاشية (Haashiya)"
-          width={120}
-          height={48}
+          width={70}
+          height={8}
           style={{ objectFit: 'contain' }}
           priority
         />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button className="text-button" style={{
-          backgroundColor: 'var(--color-ink)',
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button style={{
+          backgroundColor: 'rgba(56, 58, 58, 1)',
           color: 'var(--color-white-text)',
-          borderRadius: '20px',
-          padding: '8px 18px',
-          fontFamily: 'var(--font-arabic)'
+          borderRadius: '5px',
+          padding: '6px 16px 10px 16px',
+          fontFamily: 'var(--font-base)',
+          fontSize: '16px',
+          fontWeight: 500,
+          lineHeight: 1
         }}>
           تسجيل الدخول
         </button>
         {/* Menu icon button */}
         <button aria-label="القائمة" style={{
-          width: '36px',
-          height: '36px',
+          width: '34px',
+          height: '34px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '8px',
-          border: '1.5px solid var(--color-ink)',
+          borderRadius: '6px',
+          border: '1.5px solid var(--color-primary-600)',
           backgroundColor: 'transparent',
-          color: 'var(--color-ink)',
-          fontSize: '18px',
-          lineHeight: 1
+          color: 'var(--color-primary-600)',
+          padding: 0
         }}>
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 4.5H16M2 9H16M2 13.5H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          <svg width="22" height="22" viewBox="0 0 16 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            {/* Titik Atas */}
+            <path d="M8 1L11.5 4.5L8 8L4.5 4.5Z" />
+            {/* Titik Tengah (digeser ke bawah 1px) */}
+            <path d="M8 4.5L11.5 8L8 11.5L4.5 8Z" transform="translate(0, 2)" />
+            {/* Titik Bawah (digeser ke bawah 2px) */}
+            <path d="M8 8L11.5 11.5L8 15L4.5 11.5Z" transform="translate(0, 4)" />
           </svg>
         </button>
       </div>
