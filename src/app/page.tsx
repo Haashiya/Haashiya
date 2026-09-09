@@ -15,12 +15,12 @@ export default function Home() {
         <Hero />
         
         {/* Section Layanan */}
-        <section style={{ padding: '50px 20px' }}>
+        <section style={{ padding: '50px 19px' }}>
           <SectionTitle title="خدمات التعلم" />
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 
-            gap: '12px' 
+            gap: '10px' 
           }}>
             <ServiceCard title="معرض الأرشيف" href="#" />
             <ServiceCard title="المكتبة الرقمية" href="#" />

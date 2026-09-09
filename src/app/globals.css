@@ -67,7 +67,7 @@ html, body {
 
 body {
   font-family: var(--font-base);
-  background-color: var(--color-surface);
+  background-color: #f0f6ff;
   color: var(--color-ink);
   font-size: var(--text-body-size);
   line-height: var(--text-body-lh);
@@ -93,7 +93,7 @@ button {
   max-width: 480px; 
   margin-inline: auto;
   min-height: 100vh;
-  background-color: var(--color-surface);
+  background-color: #f0f6ff;
   box-shadow: 0 0 20px rgba(0,0,0,0.05); /* Soft shadow on desktop for mobile view */
   position: relative;
 }
