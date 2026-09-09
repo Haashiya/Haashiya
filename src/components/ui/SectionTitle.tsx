@@ -4,7 +4,7 @@ export default function SectionTitle({ title }: { title: string }) {
       color: 'var(--color-ink)',
       textAlign: 'right',
       fontSize: '25px',
-      marginBottom: '12px',
+      marginBottom: '10px',
       marginTop: '-23px',
       marginRight: '10px'
     }}>

@@ -19,7 +19,7 @@ export default function ServiceCard({ title, href }: ServiceCardProps) {
       <div style={{
         height: '45px',
         flexShrink: 0,
-        backgroundImage: 'url("https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=600&q=80")',
+        backgroundImage: 'url("/images/footer_bg.png")',
         backgroundColor: '#e2e8f0',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
