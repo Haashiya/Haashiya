@@ -26,8 +26,8 @@ export default function ResourceItem({ title, meta, badgeType, href = '#' }: Res
         {/* Badge — only for PDF/DOCX types */}
         {!isCalendar && (
           <div style={{
-            width: '42px',
-            height: '42px',
+            width: 'clamp(36px, 10vw, 42px)',
+            height: 'clamp(36px, 10vw, 42px)',
             background: 'linear-gradient(to right, var(--color-primary-500), var(--color-primary-600))',
             borderRadius: '3px',
             display: 'flex',
@@ -37,7 +37,7 @@ export default function ResourceItem({ title, meta, badgeType, href = '#' }: Res
           }}>
             <span className="font-latin" style={{
               color: 'var(--color-white-text)',
-              fontSize: badgeType === 'DOCX' ? '15px' : '15px',
+              fontSize: 'clamp(13px, 3.5vw, 15px)',
               fontWeight: 700,
               letterSpacing: '0.5px',
               textShadow: '0px 1px 2px rgba(0,0,0,0.3)',
@@ -55,8 +55,8 @@ export default function ResourceItem({ title, meta, badgeType, href = '#' }: Res
 
         {/* Text content */}
         <div style={{ flexGrow: 1, marginInlineStart: isCalendar ? '0' : '16px', textAlign: 'right', paddingRight: isCalendar ? '15px' : '0' }}>
-          <h3 className="text-h3" style={{ color: 'var(--color-ink)', fontSize: '18px', marginBottom: '4px' }}>{title}</h3>
-          <p className="text-meta" style={{ color: 'var(--color-stone)', fontSize: '12px', whiteSpace: 'pre-wrap' }} dir="auto">
+          <h3 className="text-h3" style={{ color: 'var(--color-ink)', fontSize: 'clamp(15px, 4.2vw, 18px)', marginBottom: '4px' }}>{title}</h3>
+          <p className="text-meta" style={{ color: 'var(--color-stone)', fontSize: 'clamp(10px, 2.8vw, 12px)', whiteSpace: 'pre-wrap' }} dir="auto">
             {meta.split(' • ').map((part, index, array) => (
               <span key={index}>
                 <bdi>{part}</bdi>

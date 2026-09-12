@@ -15,7 +15,7 @@ export default function Home() {
         <Hero />
 
         {/* Section Layanan */}
-        <section style={{ padding: '50px 12px 0px 12px' }}>
+        <section style={{ padding: '50px 3% 0px 3%' }}>
           <SectionTitle title="خدمات التعلم" />
           <div style={{
             display: 'grid',
@@ -30,7 +30,7 @@ export default function Home() {
         </section>
 
         {/* Section Bahan Ajar */}
-        <section style={{ padding: '50px 12px 0px 12px', backgroundColor: 'var(--color-surface-tint)' }}>
+        <section style={{ padding: '50px 3% 0px 3%', backgroundColor: 'var(--color-surface-tint)' }}>
           <SectionTitle title="المواد التعليمية" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <ResourceItem title="البديع في ضوء أساليب القرآن" meta="المرجع الرئيس • مادة البلاغة" badgeType="PDF" />
@@ -40,13 +40,13 @@ export default function Home() {
         </section>
 
         {/* Section Glossary */}
-        <section style={{ padding: '50px 12px 0px 12px' }}>
+        <section style={{ padding: '50px 3% 0px 3%' }}>
           <SectionTitle title="معجم المصطلحات" />
           <GlossarySearch />
         </section>
 
         {/* Section Kalender */}
-        <section style={{ padding: '50px 12px 50px 12px', backgroundColor: 'var(--color-surface-tint)' }}>
+        <section style={{ padding: '50px 3% 50px 3%', backgroundColor: 'var(--color-surface-tint)' }}>
           <SectionTitle title="التقويم الأكاديمي" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <ResourceItem title="ورقة بحثية في تاريخ اللغة الإندونيسية" meta="مادة  Bahasa Indonesia • 15 Desember 2026" badgeType="CALENDAR" />

@@ -94,8 +94,41 @@ button {
   margin-inline: auto;
   min-height: 100vh;
   background-color: #f0f6ff;
-  box-shadow: 0 0 20px rgba(0,0,0,0.05); /* Soft shadow on desktop for mobile view */
+  box-shadow: 0 0 20px rgba(0,0,0,0.05);
   position: relative;
+  container-type: inline-size;
+}
+
+/* Di layar HP asli, hilangkan max-width agar selalu full-width */
+@media (max-width: 480px) {
+  .mobile-container {
+    max-width: 100%;
+    box-shadow: none;
+  }
+}
+
+/* ===== RESPONSIVE: HP kecil (320px - 360px) ===== */
+@media (max-width: 360px) {
+  :root {
+    --text-h1-size: 42px;
+    --text-h2-size: 30px;
+    --text-h3-size: 22px;
+    --text-body-size: 14px;
+    --text-meta-size: 14px;
+    --text-button-size: 22px;
+  }
+}
+
+/* ===== RESPONSIVE: HP sedang (361px - 400px) ===== */
+@media (min-width: 361px) and (max-width: 400px) {
+  :root {
+    --text-h1-size: 48px;
+    --text-h2-size: 33px;
+    --text-h3-size: 24px;
+    --text-body-size: 15px;
+    --text-meta-size: 15px;
+    --text-button-size: 24px;
+  }
 }
 
 .text-h1 {

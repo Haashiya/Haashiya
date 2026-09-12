@@ -22,7 +22,7 @@ export default function Navbar() {
         top: 0,
         zIndex: 'var(--z-sticky)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', transform: 'translateY(2px)' }}>
           <Link href="/">
             <Image
               src="/images/navbar_logo.png"

@@ -17,7 +17,7 @@ export default function ServiceCard({ title, href, image = '/images/footer_bg.pn
       boxShadow: '0 4px 8px -4px rgba(0,0,0,0.5)'
     }}>
       <div style={{
-        height: '45px',
+        height: 'clamp(35px, 10vw, 45px)', // Tinggi gambar proporsional
         flexShrink: 0,
         backgroundImage: `url("${image}")`,
         backgroundColor: '#e2e8f0',
@@ -40,10 +40,10 @@ export default function ServiceCard({ title, href, image = '/images/footer_bg.pn
         <h3 className="text-h3" style={{
           color: 'var(--color-ink)',
           textAlign: 'right',
-          fontSize: '17px',
+          fontSize: 'clamp(14px, 4vw, 17px)', // Font proporsional
           fontWeight: '700',
           lineHeight: '1.2',
-          minHeight: '41px'
+          minHeight: 'clamp(34px, 9vw, 41px)' // Tinggi minimum proporsional
         }}>
           {title}
         </h3>
@@ -55,7 +55,7 @@ export default function ServiceCard({ title, href, image = '/images/footer_bg.pn
           alignItems: 'center',
           justifyContent: 'flex-start',
           gap: '6px',
-          fontSize: '13px',
+          fontSize: 'clamp(11px, 3vw, 13px)', // Font proporsional
           direction: 'ltr'
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Work_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 
@@ -8,6 +8,12 @@ const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"], 
   variable: "--font-arabic" 
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "حاشية (Haashiya) - بوابتنا لتعلم اللغة العربية",
