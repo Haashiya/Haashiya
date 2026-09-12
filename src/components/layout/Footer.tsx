@@ -31,11 +31,11 @@ export default function Footer() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', fontSize: '13px', alignItems: 'flex-start', lineHeight: 1.3, transform: 'translateY(-2px)' }}>
         <span style={{ display: 'flex', gap: '4px', justifyContent: 'flex-start', alignItems: 'center' }}>
           <span style={{ fontWeight: 650 }}>من تطوير</span>
-          <span dir="ltr" className="font-latin">@iqlbaihaqi_</span>
+          <span dir="ltr" className="font-latin"> @iqlbaihaqi_ & @aleefkhaer   </span>
         </span>
         <span style={{ display: 'flex', gap: '4px', justifyContent: 'flex-start', alignItems: 'center' }}>
           <span style={{ fontWeight: 650 }}>من تصميم</span>
-          <span dir="ltr" className="font-latin">@anggareksa__</span>
+          <span dir="ltr" className="font-latin">@anggareksa__ </span>
         </span>
       </div>
     </footer>
