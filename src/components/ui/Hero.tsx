@@ -35,7 +35,7 @@ export default function Hero() {
 
       }}>
         <span>ادرس الآن</span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square">
           <path d="M19 12H5"></path>
           <path d="M11 19l-7-7 7-7"></path>
         </svg>

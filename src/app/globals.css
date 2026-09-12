@@ -142,3 +142,9 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* Custom Input Placeholders */
+.search-input::placeholder {
+  color: var(--color-primary-500);
+  opacity: 1; /* override browser default opacity */
+}

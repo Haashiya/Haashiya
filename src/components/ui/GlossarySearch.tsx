@@ -1,56 +1,60 @@
 export default function GlossarySearch() {
   return (
     <div style={{
-      backgroundColor: 'var(--color-primary-600)',
-      borderRadius: '16px',
-      padding: '20px',
+      background: 'linear-gradient(to right, var(--color-primary-500), var(--color-primary-600))',
+      borderRadius: '12px',
+      padding: '12px',
       minHeight: '160px'
     }}>
       <div style={{
-        backgroundColor: 'var(--color-surface)',
-        borderRadius: '24px',
-        padding: '10px 16px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px'
+        gap: '4px',
+        overflow: 'hidden'
       }}>
+        <input
+          type="text"
+          placeholder="بحث"
+          className="text-body search-input"
+          style={{
+            flexGrow: 1,
+            minWidth: 0,
+            width: 0,
+            height: '34px',
+            border: 'none',
+            outline: 'none',
+            textAlign: 'right',
+            color: 'var(--color-primary-500)',
+            backgroundColor: 'var(--color-surface)',
+            borderRadius: '6px',
+            padding: '0 12px',
+            fontFamily: 'inherit',
+            fontWeight: 'bold'
+          }}
+        />
         <div style={{
-          width: '32px',
-          height: '32px',
+          width: '34px',
+          height: '34px',
           backgroundColor: 'var(--color-ink)',
-          borderRadius: '8px',
+          borderRadius: '6px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'var(--color-white-text)',
-          fontSize: '20px',
-          lineHeight: 1
+          fontSize: '30px',
+          fontWeight: '600',
+          lineHeight: 1,
+          flexShrink: 0
         }}>
           +
         </div>
-        <input 
-          type="text" 
-          placeholder="بحث" 
-          className="text-body"
-          style={{
-            border: 'none',
-            outline: 'none',
-            textAlign: 'right',
-            color: 'var(--color-ink)',
-            width: '100%',
-            backgroundColor: 'transparent',
-            paddingInlineEnd: '12px',
-            fontFamily: 'inherit'
-          }}
-        />
       </div>
-      
+
       {/* Empty state decorative line */}
       <div style={{
         width: '1px',
-        height: '60px',
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        height: '90px',
+        backgroundColor: '#061b3c',
         margin: '20px auto 0'
       }} />
     </div>

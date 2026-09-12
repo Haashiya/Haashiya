@@ -3,9 +3,10 @@ import Link from 'next/link';
 interface ServiceCardProps {
   title: string;
   href: string;
+  image?: string;
 }
 
-export default function ServiceCard({ title, href }: ServiceCardProps) {
+export default function ServiceCard({ title, href, image = '/images/footer_bg.png' }: ServiceCardProps) {
   return (
     <Link href={href} style={{
       display: 'flex',
@@ -13,16 +14,15 @@ export default function ServiceCard({ title, href }: ServiceCardProps) {
       borderRadius: '8px',
       overflow: 'hidden',
       backgroundColor: 'var(--color-surface)',
-      border: '1px solid rgba(0,0,0,0.05)',
       boxShadow: '0 4px 8px -4px rgba(0,0,0,0.5)'
     }}>
       <div style={{
         height: '45px',
         flexShrink: 0,
-        backgroundImage: 'url("/images/footer_bg.png")',
+        backgroundImage: `url("${image}")`,
         backgroundColor: '#e2e8f0',
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundPosition: '50% 3%',
         borderTopLeftRadius: '8px',
         borderTopRightRadius: '8px',
       }} />
@@ -30,7 +30,7 @@ export default function ServiceCard({ title, href }: ServiceCardProps) {
         display: 'flex',
         flexDirection: 'column',
         flexGrow: 1,
-        padding: '10px 12px 4px',
+        padding: '9px 12px 3px',
         borderTopLeftRadius: '5px',
         borderTopRightRadius: '5px',
         backgroundColor: 'var(--color-surface)',
