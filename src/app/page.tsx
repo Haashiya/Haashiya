@@ -15,7 +15,7 @@ export default function Home() {
         <Hero />
 
         {/* Section Layanan */}
-        <section style={{ padding: '50px 3% 0px 3%' }}>
+        <section style={{ padding: '50px calc(3% - 2px) 0px calc(3% - 2px)' }}>
           <SectionTitle title="خدمات التعلم" />
           <div style={{
             display: 'grid',

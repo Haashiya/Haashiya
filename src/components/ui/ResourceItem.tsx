@@ -17,7 +17,7 @@ export default function ResourceItem({ title, meta, badgeType, href = '#' }: Res
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'var(--color-surface)',
-        padding: '10px 16px',
+        padding: '9px 16px', // Vertical padding dikurangi 1px (total 2px per balok)
         clipPath: 'polygon(35px 0, 100% 0, 100% 100%, 0 100%)',
         position: 'relative',
         borderTopRightRadius: '8px',

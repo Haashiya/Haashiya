@@ -27,7 +27,7 @@ export default function Hero() {
         backgroundColor: 'var(--color-surface)',
         color: 'var(--color-primary-600)',
         borderRadius: '1.66cqi',
-        padding: '1.45cqi 1.45cqi',
+        padding: '1.75cqi 1.75cqi', // Ditambah sekitar ~0.3cqi (sekitar 1px per sisi di layar mobile)
         fontSize: '3.125cqi',
         display: 'flex',
         alignItems: 'center',

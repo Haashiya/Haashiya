@@ -90,7 +90,7 @@ button {
 /* Utilities */
 .mobile-container {
   width: 100%;
-  max-width: 480px; 
+  max-width: 604px; 
   margin-inline: auto;
   min-height: 100vh;
   background-color: #f0f6ff;
@@ -100,7 +100,7 @@ button {
 }
 
 /* Di layar HP asli, hilangkan max-width agar selalu full-width */
-@media (max-width: 480px) {
+@media (max-width: 604px) {
   .mobile-container {
     max-width: 100%;
     box-shadow: none;
