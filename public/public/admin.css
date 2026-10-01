@@ -1,0 +1,668 @@
+/* --- ADMIN DASHBOARD STYLES --- */
+
+.admin-wrapper {
+    max-width: 800px; /* Increased from 600px for card action button clearance */
+    margin: 20px auto;
+    padding: 0 16px;
+};
+
+  
+  /* Welcome Hero Banner */
+  .admin-hero {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    border-radius: 16px;
+    padding: 24px;
+    color: #ffffff;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px -5px rgba(29, 78, 216, 0.3);
+  }
+  
+  .admin-hero-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0 0 16px 0;
+  }
+  
+  .admin-hero-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .admin-badge {
+    background: #ffffff;
+    color: #1d4ed8;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
+  }
+  
+  .admin-display-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  /* 4-Tab Top Navigation Grid */
+  .admin-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+    background: #ffffff;
+    padding: 10px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .admin-tab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #1d4ed8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .admin-tab-btn:hover {
+    background-color: #f1f5f9;
+  }
+  
+  .admin-tab-btn.active {
+    background: #1d4ed8;
+    color: #ffffff;
+    border-color: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+  }
+  
+  .admin-tab-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+  
+  /* Tab Sections */
+  .tab-section {
+    display: none;
+  }
+  
+  .tab-section.active {
+    display: block;
+  }
+  
+  .tab-header-badge {
+    display: inline-block;
+    background: #1d4ed8;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    font-size: 0.95rem;
+  }
+  
+  .tab-card-body {
+    background: #ffffff;
+    border-radius: 0 16px 16px 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    min-height: 250px;
+  }
+  
+  /* Form Controls */
+  .admin-form-group {
+    margin-bottom: 16px;
+  }
+  
+  .admin-form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1e293b;
+  }
+  
+  .admin-input,
+  .admin-select {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+  }
+  
+  .admin-btn-submit {
+    width: 100%;
+    background: #1d4ed8;
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .admin-btn-submit:hover {
+    background: #1e40af;
+  }
+  
+  /* Student Table */
+  .admin-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: right;
+  }
+  
+  .admin-table th, 
+  .admin-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+  }
+  
+  .admin-table th {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #475569;
+  }
+  
+  .btn-view-profile {
+    background: #1d4ed8;
+    color: #ffffff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+  
+  .text-restricted {
+    color: #94a3b8;
+    font-size: 0.8rem;
+  }
+  
+  /* --- MODAL OVERLAY FIX --- */
+.admin-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: none; /* Keeps modal hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+  }
+  
+  .admin-modal-overlay.show {
+    display: flex !important; /* Shows modal only when triggered */
+  }
+  
+  .admin-modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    padding: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* --- FULL MASTER BOOK CARD STYLING --- */
+
+.admin-book-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  
+  .admin-book-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .admin-book-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Right Section: Info & Cover Image */
+  .admin-card-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: right;
+  }
+  
+  .admin-card-cover {
+    width: 52px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  }
+  
+  .admin-book-details .admin-book-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+  
+  .admin-book-details .admin-book-author {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #2563eb;
+    margin: 0 0 4px 0;
+  }
+  
+  .admin-book-details .admin-book-subject {
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+  
+  /* Left Section: Dark Circle Action Buttons */
+  .admin-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .btn-circle-action {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: #0f172a; /* Dark Navy matching screenshot */
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-circle-action:hover {
+    background: #2563eb; /* Highlight Blue */
+    transform: scale(1.08);
+  }
+  
+  .btn-circle-action.delete:hover {
+    background: #dc2626; /* Warning Red for Delete */
+  }
+  
+  .action-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #cbd5e1;
+    margin: 0 4px;
+  }
+
+  /* --- FANCY SEARCH BAR STYLING --- */
+
+.fancy-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 320px;
+  }
+  
+  .fancy-search-wrapper .search-icon {
+    position: absolute;
+    right: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.2s ease;
+  }
+  
+  .fancy-search-input {
+    width: 100%;
+    padding: 10px 42px 10px 38px; /* Padding accommodates search icon (right) & clear icon (left) */
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  }
+  
+  .fancy-search-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+  }
+  
+  /* Hover & Focus States */
+  .fancy-search-input:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+  }
+  
+  .fancy-search-input:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .fancy-search-wrapper:focus-within .search-icon {
+    color: #2563eb; /* Highlights icon blue when input is active */
+  }
+  
+  /* Clear (x) Button */
+  .clear-search-btn {
+    position: absolute;
+    left: 10px;
+    background: #cbd5e1;
+    color: #ffffff;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    display: none; /* Hidden by default until user types */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  
+  .clear-search-btn:hover {
+    background: #64748b;
+    transform: scale(1.1);
+  }
+  
+  .clear-search-btn.show {
+    display: flex;
+  }
+
+  /* Database Card Header Spacing */
+.database-card-header {
+    display: flex;
+    justify-content: flex-end; /* Aligns search bar to the right (RTL layout) */
+    margin-bottom: 16px;
+  }
+  
+  .database-card-header .fancy-search-wrapper {
+    max-width: 320px;
+    width: 100%;
+  }
+
+  /* --- GENDER TAB SWITCHER WITH SVGs --- */
+
+.gender-db-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .gender-tab-btn {
+    border: none;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    padding: 10px 18px;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.55; /* Dimmed inactive state */
+    transform: translateY(2px);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Spacing between label and SVG */
+  }
+  
+  .gender-tab-svg {
+    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  
+  /* Male Tab (Blue) */
+  .gender-tab-btn.male-tab {
+    background-color: #1d4ed8;
+    color: #ffffff;
+  }
+  
+  /* Female Tab (Pink) */
+  .gender-tab-btn.female-tab {
+    background-color: #db2777; /* Bright Rose Pink */
+    color: #ffffff;
+  }
+  
+  /* Active State */
+  .gender-tab-btn.active {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.08);
+  }
+  
+  .gender-tab-btn:hover:not(.active) {
+    opacity: 0.8;
+  }
+
+  /* --- STREAMLINED STUDENT LIST ROW --- */
+.student-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  
+  .student-row-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+  }
+  
+  .student-row-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+  
+  .student-row-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .student-list-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #e2e8f0;
+  }
+  
+  .student-list-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+  
+  .btn-view-profile-card {
+    background-color: #1d4ed8;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .btn-view-profile-card:hover {
+    background-color: #1e40af;
+  }
+  
+  /* Restricted view label for standard admins */
+  .text-restricted-badge {
+    color: #94a3b8;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background-color: #f8fafc;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  
+  /* --- MATCHING PROFILE MODAL STYLING --- */
+
+.profile-preview-card {
+    text-align: center;
+    padding: 28px 24px 20px 24px;
+  }
+  
+  .profile-preview-avatar {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 12px auto;
+    display: block;
+    border: 3px solid #1d4ed8;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
+  }
+  
+  .profile-preview-card .profile-label-top {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+  
+  .profile-preview-card .profile-user-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+  }
+  
+  /* Gender Badge Styling inside Modal */
+  .gender-badge-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  
+  .gender-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+  
+  .gender-badge.gender-male {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+  
+  .gender-badge.gender-female {
+    background-color: #fdf2f8;
+    color: #db2777;
+    border: 1px solid #fbcfe8;
+  }
+  
+  .profile-divider {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 16px 0;
+  }
+  
+  /* Detail Rows Layout */
+  .profile-preview-card .profile-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  
+  .profile-preview-card .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.92rem;
+  }
+  
+  .profile-preview-card .detail-label {
+    color: #64748b;
+    font-weight: 600;
+    text-align: right;
+  }
+  
+  .profile-preview-card .detail-value {
+    color: #0f172a;
+    font-weight: 700;
+    direction: ltr;
+    text-align: left;
+  }
+  
+  /* --- EXTENDED ACTION BUTTONS FOR ADMIN CARDS --- */
+
+.book-row-actions.admin-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 16px;
+    margin-right: 8px;
+    border-right: 2px solid #e2ebd8;
+  }
+  
+  .admin-action-divider {
+    width: 1px;
+    height: 22px;
+    background-color: #cbd5e1;
+    margin: 0 4px;
+  }
+  
+  /* Edit Button Hover State */
+  .action-icon-btn.admin-btn-edit:hover {
+    background-color: #2563eb !important; /* Blue Highlight */
+    transform: scale(1.08);
+  }
+  
+  /* Delete Button Hover State */
+  .action-icon-btn.admin-btn-delete:hover {
+    background-color: #dc2626 !important; /* Red Warning */
+    transform: scale(1.08);
+  }
+  

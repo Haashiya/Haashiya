@@ -35,18 +35,22 @@ export default function Navbar() {
           </Link>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button style={{
-            backgroundColor: 'rgba(56, 58, 58, 1)',
-            color: 'var(--color-white-text)',
-            borderRadius: '5px',
-            padding: '6px 16px 10px 16px',
-            fontFamily: 'var(--font-base)',
-            fontSize: '16px',
-            fontWeight: 500,
-            lineHeight: 1
-          }}>
-            تسجيل الدخول
-          </button>
+          <Link href="/login" style={{ textDecoration: 'none' }}>
+            <button style={{
+              backgroundColor: 'rgba(56, 58, 58, 1)',
+              color: 'var(--color-white-text)',
+              borderRadius: '5px',
+              padding: '6px 16px 10px 16px',
+              fontFamily: 'var(--font-base)',
+              fontSize: '16px',
+              fontWeight: 500,
+              lineHeight: 1,
+              cursor: 'pointer',
+              border: 'none'
+            }}>
+              تسجيل الدخول
+            </button>
+          </Link>
           {/* Menu icon button */}
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -212,25 +216,26 @@ export default function Navbar() {
                 marginTop: '16px'
               }}>
                 {[
-                  'التسجيلات',
-                  'السبورات',
-                  'الواجبات',
-                  'الصور'
+                  { title: 'التسجيلات', href: '/archive#recordings' },
+                  { title: 'السبورات', href: '/archive#whiteboards' },
+                  { title: 'الواجبات', href: '/archive#assignments' },
+                  { title: 'الصور', href: '/archive#photos' }
                 ].map((subItem, idx) => (
-                  <a
+                  <Link
                     key={idx}
-                    href="#"
+                    href={subItem.href}
+                    onClick={() => setIsSidebarOpen(false)}
                     style={{
                       textDecoration: 'none',
-                      color: '#003399', // Warna biru untuk sub-menu
-                      fontSize: '17px', // Disamakan dengan ukuran card
+                      color: '#003399',
+                      fontSize: '17px',
                       fontFamily: 'var(--font-arabic)',
                       fontWeight: 600,
                       display: 'block'
                     }}
                   >
-                    {subItem}
-                  </a>
+                    {subItem.title}
+                  </Link>
                 ))}
               </div>
             )}
@@ -280,12 +285,13 @@ export default function Navbar() {
                 marginTop: '18px'
               }}>
                 {[
-                  'المواد التعليمية',
-                  'المكتبة العامة'
+                  { title: 'المواد التعليمية', href: '/materials#educational-materials' },
+                  { title: 'المكتبة العامة', href: '/materials#general-library' }
                 ].map((subItem, idx) => (
-                  <a
+                  <Link
                     key={idx}
-                    href="#"
+                    href={subItem.href}
+                    onClick={() => setIsSidebarOpen(false)}
                     style={{
                       textDecoration: 'none',
                       color: '#003399',
@@ -295,8 +301,8 @@ export default function Navbar() {
                       display: 'block'
                     }}
                   >
-                    {subItem}
-                  </a>
+                    {subItem.title}
+                  </Link>
                 ))}
               </div>
             )}

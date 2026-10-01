@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول - المكتبة الرقمية</title>
+
+  <link rel="icon" type="image/png" href="assets/images/web/haashiya_logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700;800&family=Work+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Firebase Compatibility SDKs -->
+    </head>
+<body class="login-page">
+
+  <div class="login-card">
+    <h2>مرحباً بك!</h2>
+    <p class="subtitle">يُرجَى تسجيل الدخول باستخدام البيانات المزوَّدة لك</p>
+
+    <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+      <div class="input-group">
+        <label for="username">اسم المستخدم</label>
+        <input type="text" id="username" placeholder="أدخل اسم المستخدم" required autocomplete="off">
+      </div>
+
+      <div class="input-group">
+        <label for="password">كلمة المرور</label>
+        <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
+      </div>
+
+      <button type="submit" class="login-btn">تسجيل الدخول</button>
+      <div id="message" class="message"></div>
+    </form>
+
+    <a href="index.html#educational-materials" class="back-home-link" onclick="smoothNavigate(event, 'index.html#educational-materials')">
+      &rarr; العودة للرئيسية
+    </a>
+  </div>
+
+  <script>
+    // Initialize Firebase
+    
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      
+      const messageDiv = document.getElementById('message');
+      const usernameInput = document.getElementById('username').value.trim().toLowerCase();
+      const passwordInput = document.getElementById('password').value.trim();
+
+      try {
+        // Query Firestore document by username
+        const userDoc = await db.collection('users').doc(usernameInput).get();
+
+        if (!userDoc.exists) {
+          messageDiv.className = "message error";
+          messageDiv.textContent = "اسم المستخدم غير مسجل بالمنظومة";
+          return;
+        }
+
+        const userData = userDoc.data();
+        const activePassword = userData.pass || userData.password;
+
+        if (activePassword === passwordInput) {
+          const userSession = {
+            username: usernameInput,
+            name: userData.name || 'المستخدم',
+            email: userData.email || '',
+            gender: userData.gender || 'male',
+            role: userData.role || 'user',
+            pass: activePassword,
+            password: activePassword,
+            avatar: userData.avatar || 'assets/images/web/default_avatar.png',
+            studentId: userData.studentId || '11011110001'
+          };
+
+          localStorage.setItem('currentUser', JSON.stringify(userSession));
+          
+          messageDiv.className = "message success";
+          messageDiv.textContent = "تم تسجيل الدخول بنجاح! جاري التوجيه...";
+
+          setTimeout(() => {
+            document.body.classList.add('fade-out');
+            setTimeout(() => {
+              window.location.href = "index.html";
+            }, 300);
+          }, 1000);
+
+        } else {
+          messageDiv.className = "message error";
+          messageDiv.textContent = "كلمة المرور غير صحيحة! يُرجَى المحاولة مرة أخرى";
+        }
+
+      } catch (err) {
+        console.error('Login Error:', err);
+        messageDiv.className = "message error";
+        messageDiv.textContent = "حدث خطأ أثناء الاتصال بقاعدة البيانات";
+      }
+    }
+
+    function smoothNavigate(event, targetUrl) {
+      event.preventDefault();
+      document.body.classList.add('fade-out');
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 300);
+    }
+  </script>
+
+</body>
+</html>

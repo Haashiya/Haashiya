@@ -19,6 +19,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "html-to-jsx-transform": "^1.2.1",
+    "jsdom": "^30.1.1",
     "typescript": "^5"
   }
 }

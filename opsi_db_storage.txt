@@ -1,0 +1,64 @@
+=========================================================
+OPSI ARSITEKTUR DATABASE & STORAGE UNTUK PROJECT ANGKATAN
+=========================================================
+Project: Web Aplikasi AI & Upload PDF (Mahasiswa 1 Angkatan ~300 orang, 8 Semester)
+Framework: Next.js (Di-hosting di Vercel)
+
+Berikut adalah daftar lengkap (Ekspansi) opsi Database & Storage dari berbagai level dan teknologi:
+
+=========================================================
+KATEGORI A: "ALL-IN-ONE" (Database & Storage di satu tempat)
+Cocok untuk: Pemula yang ingin cepat selesai, tidak mau pusing API Keys.
+=========================================================
+
+1. SUPABASE (PostgreSQL + Supabase Storage)
+- Kelebihan: Paling populer di Next.js saat ini. Sangat gampang, 1 dashboard. Auth sangat kuat.
+- Kekurangan: Storage gratis cuma 1 GB (mungkin kurang buat 8 semester).
+- Biaya: Gratis. Kalau upgrade $25/bulan.
+
+2. FIREBASE (Firestore + Firebase Storage)
+- Kelebihan: Produk Google, ekosistem sangat matang. Fitur Realtime sangat cepat. Gratisannya (Blaze plan free tier) lumayan besar (Storage 5 GB).
+- Kekurangan: Model database NoSQL (Document) agak membingungkan kalau dosen/kampusmu mengajarkan MySQL (Relational).
+
+3. APPWRITE / POCKETBASE (Self-Hosted)
+- Kelebihan: Ini adalah sistem mirip Supabase tapi lebih ringan. Kamu bisa menyewa VPS murah (misal di Rumahweb atau DigitalOcean seharga Rp 75rb/bulan) dan install Pocketbase. Kamu dapat storage sebesar harddisk VPS-mu (misal 25 GB) dengan harga tetap.
+- Kekurangan: Kamu harus ngerti cara install server pakai Terminal Linux.
+
+
+=========================================================
+KATEGORI B: "MIX & MATCH" (Terbaik untuk efisiensi biaya)
+Cocok untuk: Memaksimalkan layanan gratis terbaik dari berbagai perusahaan.
+=========================================================
+
+4. SUPABASE (Database) + CLOUDFLARE R2 (Storage) --> [PALING DIREKOMENDASIKAN]
+- Kelebihan: Kombinasi maut. Supabase gratis 500MB DB, Cloudflare R2 gratis 10GB Storage & tanpa biaya Egress (download gratis). Sangat aman buat 4 tahun kuliah.
+- Kekurangan: Kamu harus belajar menghubungkan AWS S3 Client di Next.js untuk R2.
+
+5. MONGODB ATLAS (Database) + UPLOADTHING (Storage)
+- Kelebihan: MongoDB sangat "nyambung" dengan JavaScript. Uploadthing sangat gampang dipasang di Next.js (cuma butuh beberapa baris kode).
+- Kekurangan: Uploadthing gratis maksimal cuma 2 GB. Kalau lebih, harus bayar.
+
+6. NEON / PLANETSCALE (Database) + CLOUDINARY (Storage)
+- Kelebihan: Neon sangat kencang karena teknologi Serverless Postgres. Cloudinary sangat canggih karena punya AI yang bisa otomatis kompres (mengecilkan) ukuran PDF/Gambar saat diupload.
+- Kekurangan: Cloudinary lebih condong ke optimasi gambar, untuk PDF kadang fiturnya berlebihan.
+
+
+=========================================================
+KATEGORI C: "ENTERPRISE / LEVEL INDUSTRI"
+Cocok untuk: Ingin belajar teknologi yang dipakai Perusahaan Top (Bagus buat CV Skripsi/Kerja).
+=========================================================
+
+7. AMAZON WEB SERVICES (AWS RDS PostgreSQL + AWS S3)
+- Kelebihan: Ini standar mutlak industri (dipakai Tokopedia, Traveloka, Gojek, dll). Belajar ini, kamu bakal dicari HRD.
+- Kekurangan: Sangat rumit, dashboard membingungkan, wajib pakai kartu kredit untuk daftar, dan kalau salah setting bisa ditagih jutaan rupiah (Bill shock).
+
+8. GOOGLE CLOUD PLATFORM (Cloud SQL + Google Cloud Storage)
+- Kelebihan: Integrasi ke Google AI (Gemini) lebih mulus karena masih satu ekosistem Google. Cepat dan stabil.
+- Kekurangan: Sama seperti AWS, dashboard-nya pusing dan butuh kartu kredit.
+
+=========================================================
+KESIMPULAN TAMBAHAN:
+=========================================================
+- Kalau mau web ini gratis dan lega penyimpanannya tanpa pusing mikir batas limit PDF angkatan: Pilih **Opsi 4 (Supabase + Cloudflare R2)**.
+- Kalau kamu mau belajar ngerawat server sendiri dan dapat storage gede dengan harga murah (patungan angkatan): Pilih **Opsi 3 (VPS Rumahweb + PocketBase)**.
+- Kalau kamu butuh yang paling cepat jadi buat tugas besok: Pilih **Opsi 1 (Supabase All-in-One)** atau **Opsi 2 (Firebase)**.
