@@ -1,8 +1,18 @@
 "use client";
-import React from 'react';
+import React, { useEffect } from 'react';
 import Script from 'next/script';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Jika sudah login tapi ter-back ke /login, langsung pantulkan ke Beranda (/)
+    if (localStorage.getItem('currentUser')) {
+      router.push('/');
+    }
+  }, [router]);
+
   return (
     <>
       <link rel="stylesheet" href="/style.css" />
@@ -27,7 +37,7 @@ export default function Page() {
       <div id="message" class="message"></div>
     </form>
 
-    <a href="index.html#educational-materials" class="back-home-link" onclick="smoothNavigate(event, 'index.html#educational-materials')">
+    <a href="/" class="back-home-link" onclick="smoothNavigate(event, '/')">
       &rarr; العودة للرئيسية
     </a>
   </div>

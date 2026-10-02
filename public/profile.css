@@ -1,7 +1,7 @@
 /* --- PAGE BACKGROUND & HERO OVERRIDES --- */
 
-body {
-    background-color: #1d61d1; /* Solid royal blue background matching mockup */
+body, .mobile-container {
+    background-color: #1d61d1 !important; /* Solid royal blue background matching mockup */
   }
   
   .profile-hero {

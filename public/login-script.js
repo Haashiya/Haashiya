@@ -10,49 +10,33 @@
       const passwordInput = document.getElementById('password').value.trim();
 
       try {
-        // Fallback to fetch from users.json since Firebase isn't initialized
-        const response = await fetch('/data/users.json');
-        const usersList = await response.json();
-        
-        const userData = usersList.find(u => u.username.toLowerCase() === usernameInput);
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: usernameInput, password: passwordInput })
+        });
 
-        if (!userData) {
+        const data = await response.json();
+
+        if (!response.ok) {
           messageDiv.className = "message error";
-          messageDiv.textContent = "اسم المستخدم غير مسجل بالمنظومة";
+          messageDiv.textContent = data.error || "حدث خطأ غير متوقع";
           return;
         }
 
-        const activePassword = userData.pass || userData.password;
+        // Login successful
+        const userSession = data.user;
+        localStorage.setItem('currentUser', JSON.stringify(userSession));
+        
+        messageDiv.className = "message success";
+        messageDiv.textContent = "تم تسجيل الدخول بنجاح! جاري التوجيه...";
 
-        if (activePassword === passwordInput) {
-          const userSession = {
-            username: usernameInput,
-            name: userData.name || 'المستخدم',
-            email: userData.email || '',
-            gender: userData.gender || 'male',
-            role: userData.role || 'user',
-            pass: activePassword,
-            password: activePassword,
-            avatar: userData.avatar || '/assets/images/web/default_avatar.png',
-            studentId: userData.studentId || '11011110001'
-          };
-
-          localStorage.setItem('currentUser', JSON.stringify(userSession));
-          
-          messageDiv.className = "message success";
-          messageDiv.textContent = "تم تسجيل الدخول بنجاح! جاري التوجيه...";
-
+        setTimeout(() => {
+          document.body.classList.add('fade-out');
           setTimeout(() => {
-            document.body.classList.add('fade-out');
-            setTimeout(() => {
-              window.location.href = "/materials";
-            }, 300);
-          }, 1000);
-
-        } else {
-          messageDiv.className = "message error";
-          messageDiv.textContent = "كلمة المرور غير صحيحة! يُرجَى المحاولة مرة أخرى";
-        }
+            window.location.replace("/archive");
+          }, 300);
+        }, 1000);
 
       } catch (err) {
         console.error('Login Error:', err);

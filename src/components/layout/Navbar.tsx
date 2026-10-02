@@ -2,12 +2,46 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
+  const pathname = usePathname();
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isArchiveOpen, setIsArchiveOpen] = useState(true);
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false); // Default tertutup atau terbuka, saya set false agar rapi
+  // Buka dropdown sesuai dengan halaman saat ini
+  const [isArchiveOpen, setIsArchiveOpen] = useState(pathname === '/archive');
+  const [isLibraryOpen, setIsLibraryOpen] = useState(pathname === '/library'); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userData, setUserData] = useState<{name: string, role: string, avatar: string, gender?: string} | null>(null);
+
+  // Jika pindah halaman lewat router tanpa full reload, pastikan sidebar menyesuaikan otomatis
+  useEffect(() => {
+    if (pathname === '/archive') {
+      setIsArchiveOpen(true);
+      setIsLibraryOpen(false);
+    } else if (pathname === '/library') {
+      setIsArchiveOpen(false);
+      setIsLibraryOpen(true);
+    } else {
+      setIsArchiveOpen(false);
+      setIsLibraryOpen(false);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    const user = localStorage.getItem('currentUser');
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        setUserData(parsed);
+        setIsLoggedIn(true);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
 
   return (
     <>
@@ -35,22 +69,210 @@ export default function Navbar() {
           </Link>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Link href="/login" style={{ textDecoration: 'none' }}>
-            <button style={{
-              backgroundColor: 'rgba(56, 58, 58, 1)',
-              color: 'var(--color-white-text)',
-              borderRadius: '5px',
-              padding: '6px 16px 10px 16px',
-              fontFamily: 'var(--font-base)',
-              fontSize: '16px',
-              fontWeight: 500,
-              lineHeight: 1,
-              cursor: 'pointer',
-              border: 'none'
-            }}>
-              تسجيل الدخول
-            </button>
-          </Link>
+          {!isLoggedIn ? (
+            <Link href="/login" style={{ textDecoration: 'none' }}>
+              <button style={{
+                backgroundColor: 'rgba(56, 58, 58, 1)',
+                color: 'var(--color-white-text)',
+                borderRadius: '5px',
+                padding: '6px 16px 10px 16px',
+                fontFamily: 'var(--font-base)',
+                fontSize: '16px',
+                fontWeight: 500,
+                lineHeight: 1,
+                cursor: 'pointer',
+                border: 'none'
+              }}>
+                تسجيل الدخول
+              </button>
+            </Link>
+          ) : (
+            <div style={{ position: 'relative' }} dir="rtl">
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  backgroundColor: '#E5E9EC',
+                  padding: '6px 6px 6px 12px',
+                  borderRadius: '9999px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-arabic)',
+                }}
+              >
+                {/* Avatar */}
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  backgroundColor: '#1E3A8A',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  fontFamily: 'var(--font-base)',
+                  overflow: 'hidden'
+                }}>
+                  {userData?.avatar && !userData.avatar.includes('default_avatar') ? (
+                    <img src={userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <img 
+                      src={userData?.gender === 'female' 
+                        ? 'https://api.dicebear.com/9.x/avataaars/svg?seed=Jane&backgroundColor=ffdfbf' 
+                        : 'https://api.dicebear.com/9.x/avataaars/svg?seed=John&backgroundColor=b6e3f4'} 
+                      alt="Avatar" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                  )}
+                </div>
+
+                {/* Name */}
+                <span style={{ fontSize: '16px', fontWeight: 700, color: '#111827', marginTop: '2px' }}>
+                  {userData?.name || 'alip'}
+                </span>
+
+                {/* Role Badge */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: '#BFDBFE',
+                  color: '#1E3A8A',
+                  padding: '2px 10px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  marginTop: '2px'
+                }}>
+                  <span>
+                    {userData?.role === 'superadmin' ? 'مسؤول عام' : 
+                     userData?.role === 'admin' ? 'مسؤول' : 'طالب'}
+                  </span>
+                  {userData?.gender === 'female' ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="9" r="6"></circle>
+                      <line x1="12" y1="15" x2="12" y2="22"></line>
+                      <line x1="9" y1="19" x2="15" y2="19"></line>
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="10" cy="14" r="7"></circle>
+                      <line x1="21" y1="3" x2="15" y2="9"></line>
+                      <polyline points="16 3 21 3 21 8"></polyline>
+                    </svg>
+                  )}
+                </div>
+
+                {/* Caret */}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginTop: '2px' }}>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isProfileOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  marginTop: '8px',
+                  width: '220px',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '16px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  zIndex: 50
+                }}>
+                  <Link href="/profile" onClick={() => setIsProfileOpen(false)} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '8px 12px',
+                    textDecoration: 'none',
+                    color: '#374151',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-arabic)',
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s'
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span style={{ marginTop: '2px' }}>الملف الشخصي</span>
+                  </Link>
+
+                  <button onClick={() => {
+                    setIsProfileOpen(false);
+                    if (typeof window !== 'undefined' && (window as any).openNotificationsModal) {
+                      (window as any).openNotificationsModal();
+                    }
+                  }} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '8px 12px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#374151',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-arabic)',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'right'
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span style={{ marginTop: '2px' }}>الإشعارات</span>
+                  </button>
+                  
+                  <div style={{ height: '1px', backgroundColor: '#D1D5DB', margin: '4px 0' }}></div>
+
+                  <button onClick={() => {
+                    localStorage.removeItem('currentUser');
+                    setIsLoggedIn(false);
+                    setIsProfileOpen(false);
+                    setUserData(null);
+                    window.location.href = '/login';
+                  }} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '8px 12px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#374151',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-arabic)',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'right',
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span style={{ marginTop: '2px' }}>تسجيل الخروج</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           {/* Menu icon button */}
           <button
             onClick={() => setIsSidebarOpen(true)}

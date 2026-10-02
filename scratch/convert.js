@@ -3,7 +3,9 @@ const fs = require('fs');
 const files = [
   { name: 'login.html', out: 'login', css: ['/style.css'], addLayout: false },
   { name: 'archive.html', out: 'archive', css: ['/dashboard.css', '/archive.css'], addLayout: true },
-  { name: 'index.html', out: 'materials', css: ['/dashboard.css'], addLayout: true }
+  { name: 'index.html', out: 'materials', css: ['/dashboard.css'], addLayout: true },
+  { name: 'profile.html', out: 'profile', css: ['/dashboard.css', '/profile.css'], addLayout: true },
+  { name: 'admin.html', out: 'admin', css: ['/dashboard.css', '/admin.css'], addLayout: true }
 ];
 
 const basePath = 'c:\\Users\\Dmasz\\OneDrive\\Desktop\\Hasyiyah\\public\\public\\';
@@ -69,6 +71,9 @@ export default function Page() {
   try {
     const outDir = outPath + f.out;
     fs.writeFileSync(outDir + '\\page.tsx', fileContent);
+    if (scriptContent.trim()) {
+      fs.writeFileSync(publicPath + f.out + '-script.js', scriptContent);
+    }
     console.log(`Converted ${f.name} to ${f.out}/page.tsx with layout=${f.addLayout}`);
   } catch (err) {
     console.error(`Error converting ${f.name}:`, err);

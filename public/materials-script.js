@@ -1,22 +1,8 @@
-    // --- FIREBASE MOCKS (Since Firebase is disabled) ---
-    const firebase = { firestore: { FieldValue: { serverTimestamp: () => Date.now() } } };
-    const db = {
-      collection: () => ({
-        orderBy: () => ({ onSnapshot: () => {} }),
-        add: async () => {},
-        doc: () => ({ delete: async () => {} })
-      })
-    };
-    const storage = {
-      ref: () => ({
-        put: async () => ({ getDownloadURL: async () => '' })
-      })
-    };
 
     // --- DATA LOADERS ---
     async function loadUsersData() {
       try {
-        const response = await fetch('/data/users.json');
+        var response = await fetch('data/users.json');
         if (!response.ok) throw new Error('Failed to fetch users.json');
         return await response.json();
       } catch (error) {
@@ -27,7 +13,7 @@
   
     async function loadBooksData() {
       try {
-        const response = await fetch('/data/books.json');
+        var response = await fetch('data/books.json');
         if (!response.ok) throw new Error('Failed to fetch books.json');
         return await response.json();
       } catch (error) {
@@ -37,14 +23,14 @@
     }
   
     async function renderEducationalBooks() {
-      const container = document.getElementById('educationalBooksContainer');
+      var container = document.getElementById('educationalBooksContainer');
       if (!container) return;
   
-      const books = await loadBooksData();
+      var books = await loadBooksData();
       container.innerHTML = '';
   
       books.forEach(book => {
-        const card = document.createElement('div');
+        var card = document.createElement('div');
         card.className = 'book-row-card';
         card.setAttribute('data-category', book.category);
   
@@ -80,7 +66,7 @@
       }, 300);
     }
   
-    let activeCategory = 'balagha';
+    var activeCategory = 'balagha';
   
     function filterCategory(categoryKey, btnElement) {
       activeCategory = categoryKey;
@@ -90,17 +76,17 @@
     }
   
     function filterBooks() {
-      const searchInput = document.getElementById('searchInput');
-      const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-      const bookRows = document.querySelectorAll('.book-row-card');
+      var searchInput = document.getElementById('searchInput');
+      var searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      var bookRows = document.querySelectorAll('.book-row-card');
   
       bookRows.forEach(row => {
-        const rowCat = row.getAttribute('data-category');
-        const title = row.querySelector('.book-row-title')?.textContent.toLowerCase() || '';
-        const author = row.querySelector('.book-row-author')?.textContent.toLowerCase() || '';
+        var rowCat = row.getAttribute('data-category');
+        var title = row.querySelector('.book-row-title')?.textContent.toLowerCase() || '';
+        var author = row.querySelector('.book-row-author')?.textContent.toLowerCase() || '';
   
-        const matchesCategory = (activeCategory === 'all' || rowCat === activeCategory);
-        const matchesSearch = title.includes(searchTerm) || author.includes(searchTerm);
+        var matchesCategory = (activeCategory === 'all' || rowCat === activeCategory);
+        var matchesSearch = title.includes(searchTerm) || author.includes(searchTerm);
   
         if (matchesCategory && matchesSearch) {
           row.style.display = 'flex';
@@ -111,20 +97,20 @@
     }
   
     // --- LOCALSTORAGE KEYS ---
-    const STORAGE_PENDING_KEY = 'pendingBooksDB';
-    const STORAGE_APPROVED_KEY = 'approvedBooksDB';
-    const STORAGE_NOTIFS_KEY = 'userNotificationsDB';
+    var STORAGE_PENDING_KEY = 'pendingBooksDB';
+    var STORAGE_APPROVED_KEY = 'approvedBooksDB';
+    var STORAGE_NOTIFS_KEY = 'userNotificationsDB';
   
     // --- USER LOGIN SESSION & DROPDOWN ---
     function checkUserSession() {
-      const sessionData = localStorage.getItem('currentUser');
-      const navbarRight = document.querySelector('.navbar-right');
+      var sessionData = localStorage.getItem('currentUser');
+      var navbarRight = document.querySelector('.navbar-right');
   
       if (sessionData && navbarRight) {
-        const user = JSON.parse(sessionData);
-        const isMale = user.gender === 'male';
+        var user = JSON.parse(sessionData);
+        var isMale = user.gender === 'male';
   
-        const genderBadgeHTML = isMale ? `
+        var genderBadgeHTML = isMale ? `
           <span class="gender-badge gender-male">
             <svg class="gender-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="10" cy="14" r="5"></circle>
@@ -196,7 +182,7 @@
         `;
   
         if (user.role === 'admin') {
-          const adminBtn = document.getElementById('adminQueueBtn');
+          var adminBtn = document.getElementById('adminQueueBtn');
           if (adminBtn) adminBtn.style.display = 'inline-flex';
           updatePendingBadgeCount();
           updateNotificationBadge();
@@ -206,24 +192,24 @@
   
     function toggleProfileDropdown(e) {
       e.stopPropagation();
-      const dropdown = document.getElementById('profileDropdown');
+      var dropdown = document.getElementById('profileDropdown');
       if (dropdown) dropdown.classList.toggle('show');
     }
   
     document.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('profileDropdown');
+      var dropdown = document.getElementById('profileDropdown');
       if (dropdown && dropdown.classList.contains('show')) {
         dropdown.classList.remove('show');
       }
     });
   
     function logoutUser() {
-      const modal = document.getElementById('logoutModal');
+      var modal = document.getElementById('logoutModal');
       if (modal) modal.classList.add('show');
     }
   
     function closeLogoutModal() {
-      const modal = document.getElementById('logoutModal');
+      var modal = document.getElementById('logoutModal');
       if (modal) modal.classList.remove('show');
     }
   
@@ -244,7 +230,7 @@
     }
   
     function showToastNotification() {
-      const toast = document.getElementById('toastNotification');
+      var toast = document.getElementById('toastNotification');
       if (toast) {
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3500);
@@ -252,8 +238,8 @@
     }
   
     function showErrorToast(messageText) {
-      const toast = document.getElementById('errorToastNotification');
-      const messageSpan = document.getElementById('errorToastMessage');
+      var toast = document.getElementById('errorToastNotification');
+      var messageSpan = document.getElementById('errorToastMessage');
   
       if (toast && messageSpan) {
         messageSpan.textContent = messageText;
@@ -264,8 +250,8 @@
   
     function validateFileSelect(input, textId, allowedTypes, fileTypeName) {
       if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const isAllowed = allowedTypes.some(type => file.type.match(type) || file.name.toLowerCase().endsWith(type));
+        var file = input.files[0];
+        var isAllowed = allowedTypes.some(type => file.type.match(type) || file.name.toLowerCase().endsWith(type));
   
         if (!isAllowed) {
           showErrorToast(`عذراً، هذا الحقل يقبل ملفات ${fileTypeName} فقط!`);
@@ -277,8 +263,8 @@
     }
   
     function setupDropZone(zoneId, inputId, textId, allowedTypes, fileTypeName) {
-      const zone = document.getElementById(zoneId);
-      const input = document.getElementById(inputId);
+      var zone = document.getElementById(zoneId);
+      var input = document.getElementById(inputId);
   
       if (!zone || !input) return;
   
@@ -297,17 +283,17 @@
       });
   
       zone.addEventListener('drop', (e) => {
-        const files = e.dataTransfer.files;
+        var files = e.dataTransfer.files;
         if (files.length > 0) {
-          const file = files[0];
-          const isAllowed = allowedTypes.some(type => file.type.match(type) || file.name.toLowerCase().endsWith(type));
+          var file = files[0];
+          var isAllowed = allowedTypes.some(type => file.type.match(type) || file.name.toLowerCase().endsWith(type));
   
           if (!isAllowed) {
             showErrorToast(`عذراً، هذا الحقل يقبل ملفات ${fileTypeName} فقط!`);
             return;
           }
   
-          const dataTransfer = new DataTransfer();
+          var dataTransfer = new DataTransfer();
           dataTransfer.items.add(file);
           input.files = dataTransfer.files;
           validateFileSelect(input, textId, allowedTypes, fileTypeName);
@@ -329,13 +315,13 @@
     }
   
     function updatePendingBadgeCount() {
-      const badge = document.getElementById('pendingBadgeCount');
+      var badge = document.getElementById('pendingBadgeCount');
       if (badge) badge.textContent = getPendingBooks().length;
     }
   
     function renderPendingQueueList() {
-      const container = document.getElementById('pendingBooksList');
-      const pendingBooks = getPendingBooks();
+      var container = document.getElementById('pendingBooksList');
+      var pendingBooks = getPendingBooks();
   
       if (!container) return;
       container.innerHTML = '';
@@ -346,9 +332,9 @@
       }
   
       pendingBooks.forEach((book, index) => {
-        const card = document.createElement('div');
+        var card = document.createElement('div');
         card.className = 'pending-item-card';
-        const coverImage = book.coverUrl || '/assets/images/covers/badee3tareekh.png';
+        var coverImage = book.coverUrl || 'assets/images/covers/badee3tareekh.png';
   
         card.innerHTML = `
           <div class="pending-item-left">
@@ -375,10 +361,10 @@
     }
   
     function approveBook(index) {
-      let pending = getPendingBooks();
-      let approved = JSON.parse(localStorage.getItem(STORAGE_APPROVED_KEY) || '[]');
+      var pending = getPendingBooks();
+      var approved = JSON.parse(localStorage.getItem(STORAGE_APPROVED_KEY) || '[]');
   
-      const bookToApprove = pending.splice(index, 1)[0];
+      var bookToApprove = pending.splice(index, 1)[0];
       if (!bookToApprove) return;
   
       approved.unshift(bookToApprove);
@@ -398,8 +384,8 @@
     }
   
     function rejectBook(index) {
-      let pending = getPendingBooks();
-      const bookToReject = pending.splice(index, 1)[0];
+      var pending = getPendingBooks();
+      var bookToReject = pending.splice(index, 1)[0];
       
       localStorage.setItem(STORAGE_PENDING_KEY, JSON.stringify(pending));
   
@@ -416,12 +402,12 @@
     }
   
     function listenToApprovedBooks() {
-  const container = document.querySelector('.main-card-section:last-of-type .book-list-container');
+  var container = document.querySelector('.main-card-section:last-of-type .book-list-container');
   if (!container) return;
 
-  const sessionData = localStorage.getItem('currentUser');
-  const user = sessionData ? JSON.parse(sessionData) : null;
-  const isAdmin = user && user.role === 'admin';
+  var sessionData = localStorage.getItem('currentUser');
+  var user = sessionData ? JSON.parse(sessionData) : null;
+  var isAdmin = user && user.role === 'admin';
 
   db.collection('approved_books')
     .orderBy('createdAt', 'desc')
@@ -429,12 +415,12 @@
       document.querySelectorAll('.user-approved-card').forEach(el => el.remove());
 
       snapshot.forEach((doc) => {
-        const book = doc.data();
-        const card = document.createElement('div');
+        var book = doc.data();
+        var card = document.createElement('div');
         card.className = 'book-row-card user-approved-card';
         card.setAttribute('data-category', 'general');
 
-        const adminActions = isAdmin ? `
+        var adminActions = isAdmin ? `
           <button class="action-icon-btn admin-delete-btn" onclick="removeApprovedBook('${doc.id}')" title="حذف الكتاب">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"></polyline>
@@ -470,14 +456,14 @@
   // --- HELPER FUNCTION FOR FIREBASE STORAGE ---
 async function uploadFileToStorage(file, folderName) {
   // Creates a unique path in bucket e.g., 'pdfs/1726732000000_book.pdf'
-  const fileRef = storage.ref(`${folderName}/${Date.now()}_${file.name}`);
-  const snapshot = await fileRef.put(file);
+  var fileRef = storage.ref(`${folderName}/${Date.now()}_${file.name}`);
+  var snapshot = await fileRef.put(file);
   return await snapshot.getDownloadURL();
 }
 
 function convertFileToBase64(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    var reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = error => reject(error);
@@ -488,11 +474,11 @@ function convertFileToBase64(file) {
   async function handleBookSubmit(e) {
   e.preventDefault();
 
-  const title = document.getElementById('bookTitle').value.trim();
-  const author = document.getElementById('bookAuthor').value.trim();
-  const theme = document.getElementById('bookCategory').value;
-  const pdfFile = document.getElementById('pdfInput').files[0];
-  const coverFile = document.getElementById('coverInput').files[0];
+  var title = document.getElementById('bookTitle').value.trim();
+  var author = document.getElementById('bookAuthor').value.trim();
+  var theme = document.getElementById('bookCategory').value;
+  var pdfFile = document.getElementById('pdfInput').files[0];
+  var coverFile = document.getElementById('coverInput').files[0];
 
   if (!title || !author || !pdfFile) {
     showErrorToast('يُرجَى ملء جميع الحقول المطلوبة ورفع ملف PDF');
@@ -509,10 +495,10 @@ function convertFileToBase64(file) {
     showToastNotification('جاري تجهيز الملفات...');
 
     // Convert PDF to Base64 string
-    const pdfUrl = await convertFileToBase64(pdfFile);
+    var pdfUrl = await convertFileToBase64(pdfFile);
 
     // Convert Cover to Base64 string if present, else fallback
-    let coverUrl = '/assets/images/covers/badee3tareekh.png';
+    var coverUrl = 'assets/images/covers/badee3tareekh.png';
     if (coverFile) {
       coverUrl = await convertFileToBase64(coverFile);
     }
@@ -536,11 +522,11 @@ function convertFileToBase64(file) {
   }
 }
   
-    let currentEditingIndex = null;
+    var currentEditingIndex = null;
   
     function openEditBookModal(index) {
-      const approved = JSON.parse(localStorage.getItem(STORAGE_APPROVED_KEY) || '[]');
-      const book = approved[index];
+      var approved = JSON.parse(localStorage.getItem(STORAGE_APPROVED_KEY) || '[]');
+      var book = approved[index];
   
       if (!book) return;
       currentEditingIndex = index;
@@ -562,7 +548,7 @@ function convertFileToBase64(file) {
   
       if (currentEditingIndex === null) return;
   
-      let approved = JSON.parse(localStorage.getItem(STORAGE_APPROVED_KEY) || '[]');
+      var approved = JSON.parse(localStorage.getItem(STORAGE_APPROVED_KEY) || '[]');
       
       approved[currentEditingIndex].title = document.getElementById('editBookTitle').value.trim();
       approved[currentEditingIndex].author = document.getElementById('editBookAuthor').value.trim();
@@ -575,16 +561,16 @@ function convertFileToBase64(file) {
       showToastNotification();
     }
   
-    let currentDeletingDocId = null;
+    var currentDeletingDocId = null;
 
 function removeApprovedBook(docId) {
   currentDeletingDocId = docId;
-  const modal = document.getElementById('deleteBookModal');
+  var modal = document.getElementById('deleteBookModal');
   if (modal) modal.classList.add('show');
 }
 
 function closeDeleteBookModal() {
-  const modal = document.getElementById('deleteBookModal');
+  var modal = document.getElementById('deleteBookModal');
   if (modal) modal.classList.remove('show');
   currentDeletingDocId = null;
 }
@@ -607,9 +593,9 @@ async function confirmDeleteBook() {
     }
   
     function addNotification(title, message, type = 'pending') {
-      const notifications = getNotifications();
-      const now = new Date();
-      const formattedTimestamp = now.toLocaleDateString('ar-EG', {
+      var notifications = getNotifications();
+      var now = new Date();
+      var formattedTimestamp = now.toLocaleDateString('ar-EG', {
         day: 'numeric',
         month: 'short'
       }) + ' ، ' + now.toLocaleTimeString('ar-EG', { 
@@ -631,11 +617,11 @@ async function confirmDeleteBook() {
     }
   
     function updateNotificationBadge() {
-      const dropdownBadge = document.querySelector('.unread-badge');
-      const navRedDot = document.querySelector('.nav-unread-dot');
+      var dropdownBadge = document.querySelector('.unread-badge');
+      var navRedDot = document.querySelector('.nav-unread-dot');
       
-      const notifications = getNotifications();
-      const unreadCount = notifications.filter(n => n.unread).length;
+      var notifications = getNotifications();
+      var unreadCount = notifications.filter(n => n.unread).length;
   
       if (unreadCount > 0) {
         if (dropdownBadge) {
@@ -652,7 +638,7 @@ async function confirmDeleteBook() {
     function openNotificationsModal(e) {
       if (e) e.preventDefault();
       
-      const notifications = getNotifications().map(n => ({ ...n, unread: false }));
+      var notifications = getNotifications().map(n => ({ ...n, unread: false }));
       localStorage.setItem(STORAGE_NOTIFS_KEY, JSON.stringify(notifications));
       updateNotificationBadge();
   
@@ -671,8 +657,8 @@ async function confirmDeleteBook() {
     }
   
     function renderNotificationsList() {
-      const container = document.getElementById('notificationsList');
-      const notifications = getNotifications();
+      var container = document.getElementById('notificationsList');
+      var notifications = getNotifications();
   
       if (!container) return;
       container.innerHTML = '';
@@ -683,9 +669,9 @@ async function confirmDeleteBook() {
       }
   
       notifications.forEach(n => {
-        const card = document.createElement('div');
+        var card = document.createElement('div');
         card.className = `notification-item-card ${n.unread ? 'unread' : ''}`;
-        let iconMarkup = '';
+        var iconMarkup = '';
         
         if (n.type === 'success') {
           iconMarkup = `<div class="notification-icon success"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div>`;
@@ -708,8 +694,8 @@ async function confirmDeleteBook() {
     }
   
     function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebar-overlay');
+      var sidebar = document.getElementById('sidebar');
+      var overlay = document.getElementById('sidebar-overlay');
   
       if (sidebar && overlay) {
         sidebar.classList.toggle('open');
@@ -718,17 +704,17 @@ async function confirmDeleteBook() {
     }
   
     function initSidebarEvents() {
-      const openSidebarBtn = document.getElementById('open-sidebar-btn');
-      const closeSidebarBtn = document.getElementById('close-sidebar-btn');
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebar-overlay');
+      var openSidebarBtn = document.getElementById('open-sidebar-btn');
+      var closeSidebarBtn = document.getElementById('close-sidebar-btn');
+      var sidebar = document.getElementById('sidebar');
+      var overlay = document.getElementById('sidebar-overlay');
   
-      const archiveBtn = document.getElementById('archive-btn');
-      const archiveSubmenu = document.getElementById('archive-submenu');
-      const libraryBtn = document.getElementById('library-btn');
-      const librarySubmenu = document.getElementById('library-submenu');
+      var archiveBtn = document.getElementById('archive-btn');
+      var archiveSubmenu = document.getElementById('archive-submenu');
+      var libraryBtn = document.getElementById('library-btn');
+      var librarySubmenu = document.getElementById('library-submenu');
   
-      const closeSidebar = () => {
+      var closeSidebar = () => {
         if (sidebar && overlay) {
           sidebar.classList.remove('open');
           overlay.classList.remove('active');
@@ -738,10 +724,10 @@ async function confirmDeleteBook() {
       if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
       if (overlay) overlay.addEventListener('click', closeSidebar);
   
-      const toggleDropdown = (button, submenu) => {
+      var toggleDropdown = (button, submenu) => {
         if (!button || !submenu) return;
-        const isOpen = submenu.classList.contains('open');
-        const arrow = button.querySelector('.arrow-icon');
+        var isOpen = submenu.classList.contains('open');
+        var arrow = button.querySelector('.arrow-icon');
   
         if (isOpen) {
           submenu.classList.remove('open');
@@ -769,7 +755,7 @@ async function confirmDeleteBook() {
     }
   
     // --- SINGLE CONSOLIDATED DOM INITIALIZATION ---
-    async function initMaterialsPage() {
+    setTimeout( async () => {
       await renderEducationalBooks();
       checkUserSession();
       listenToApprovedBooks();
@@ -777,11 +763,5 @@ async function confirmDeleteBook() {
       initSidebarEvents();
       setupDropZone('pdfDropZone', 'pdfInput', 'pdfDropText', ['application/pdf', '.pdf'], 'PDF');
       setupDropZone('coverDropZone', 'coverInput', 'coverDropText', ['image/png', 'image/jpeg', 'image/jpg'], 'صور (PNG/JPG)');
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initMaterialsPage);
-    } else {
-      initMaterialsPage();
-    }
+    });
   

@@ -1,164 +1,166 @@
 
-        const STORAGE_NOTIFS_KEY = 'userNotificationsDB';
-    const YOUTUBE_API_KEY = "AIzaSyDm_N7gXYi3gJWPvHZDZBXeUrq9LhNbDac";
+var STORAGE_NOTIFS_KEY = 'userNotificationsDB';
+var YOUTUBE_API_KEY = "AIzaSyCLY3RWXne_458p9e6ZSBMTzFiJveQSn7Q";
 
-    const PLAYLIST_MAP = {
-      balagha: "PLKU5sS798fPo", // Replace with full Balagha Playlist ID when available
-      qiraah: "PLdnR_d9WNleo",
-      tawheed: "PLPJw5eoRDYkw",
-      kitaba: "",
-      nahw: "",
-      adab: "",
-      indonesian: ""
-    };
+var PLAYLIST_MAP = {
+  balagha: "PLKU5sS798fPo", // Replace with full Balagha Playlist ID when available
+  qiraah: "PLdnR_d9WNleo",
+  tawheed: "PLPJw5eoRDYkw",
+  kitaba: "PLGELkd3mgXnk",
+  nahw: "PLe4mglMAFyMI",
+  adab: "PLdJKXXyPk4G0",
+  indonesian: "PLBh8NviWZoXw",
+  pkn: "PLKDrouyi9c0I" // <-- Isi ID Playlist PKN di sini nanti
+};
 
-    const SUBJECT_NAMES = {
-      balagha: "البلاغة",
-      qiraah: "القراءة",
-      tawheed: "التوحيد",
-      kitaba: "الكتابة",
-      nahw: "النحو",
-      adab: "تاريخ الأدب",
-      indonesian: "اللغة الإندونيسية"
-    };
+var SUBJECT_NAMES = {
+  balagha: "البلاغة",
+  qiraah: "القراءة",
+  tawheed: "التوحيد",
+  kitaba: "الكتابة",
+  nahw: "النحو",
+  adab: "تاريخ الأدب",
+  indonesian: "اللغة الإندونيسية",
+  pkn: "التربية الوطنية" // PKN dalam bahasa Arab (Tarbiyah Wathaniyyah)
+};
 
-    // --- SIDEBAR DRAWER LOGIC ---
-    function toggleSidebar() {
-      const sb = document.getElementById('sidebar');
-      const ov = document.getElementById('sidebar-overlay');
-      if (sb && ov) { 
-        sb.classList.toggle('open'); 
-        ov.classList.toggle('active'); 
-      }
+// --- SIDEBAR DRAWER LOGIC ---
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if (sb && ov) {
+    sb.classList.toggle('open');
+    ov.classList.toggle('active');
+  }
+}
+
+function initSidebarEvents() {
+  var openSidebarBtn = document.getElementById('open-sidebar-btn');
+  var closeSidebarBtn = document.getElementById('close-sidebar-btn');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+
+  var archiveBtn = document.getElementById('archive-btn');
+  var archiveSubmenu = document.getElementById('archive-submenu');
+  var libraryBtn = document.getElementById('library-btn');
+  var librarySubmenu = document.getElementById('library-submenu');
+
+  var closeSidebar = () => {
+    if (sidebar && overlay) {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    }
+  };
+
+  if (openSidebarBtn && sidebar && overlay) {
+    openSidebarBtn.addEventListener('click', () => {
+      sidebar.classList.add('open');
+      overlay.classList.add('active');
+    });
+  }
+
+  if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
+  if (overlay) overlay.addEventListener('click', closeSidebar);
+
+  var toggleDropdown = (button, submenu) => {
+    if (!button || !submenu) return;
+    var isOpen = submenu.classList.contains('open');
+    var arrow = button.querySelector('.arrow-icon');
+
+    if (isOpen) {
+      submenu.classList.remove('open');
+      button.classList.remove('active');
+      if (arrow) arrow.classList.remove('open');
+    } else {
+      submenu.classList.add('open');
+      button.classList.add('active');
+      if (arrow) arrow.classList.add('open');
+    }
+  };
+
+  if (archiveBtn && archiveSubmenu) {
+    archiveBtn.addEventListener('click', () => toggleDropdown(archiveBtn, archiveSubmenu));
+  }
+  if (libraryBtn && librarySubmenu) {
+    libraryBtn.addEventListener('click', () => toggleDropdown(libraryBtn, librarySubmenu));
+  }
+}
+
+// --- NOTIFICATION HELPERS ---
+function getNotifications() {
+  return JSON.parse(localStorage.getItem(STORAGE_NOTIFS_KEY) || '[]');
+}
+
+function updateNotificationBadge() {
+  var dropdownBadge = document.querySelector('.unread-badge');
+  var navRedDot = document.querySelector('.nav-unread-dot');
+
+  var notifications = getNotifications();
+  var unreadCount = notifications.filter(n => n.unread).length;
+
+  if (unreadCount > 0) {
+    if (dropdownBadge) {
+      dropdownBadge.textContent = unreadCount;
+      dropdownBadge.style.display = 'inline-block';
+    }
+    if (navRedDot) navRedDot.style.display = 'inline-block';
+  } else {
+    if (dropdownBadge) dropdownBadge.style.display = 'none';
+    if (navRedDot) navRedDot.style.display = 'none';
+  }
+}
+
+function openNotificationsModal(e) {
+  if (e) e.preventDefault();
+  var dropdown = document.getElementById('profileDropdown');
+  if (dropdown) dropdown.classList.remove('show');
+
+  var notifications = getNotifications().map(n => ({ ...n, unread: false }));
+  localStorage.setItem(STORAGE_NOTIFS_KEY, JSON.stringify(notifications));
+  updateNotificationBadge();
+
+  renderNotificationsList();
+  var modal = document.getElementById('notificationsModal');
+  if (modal) modal.classList.add('show');
+}
+
+function closeNotificationsModal() {
+  var modal = document.getElementById('notificationsModal');
+  if (modal) modal.classList.remove('show');
+}
+
+function clearAllNotifications() {
+  localStorage.setItem(STORAGE_NOTIFS_KEY, JSON.stringify([]));
+  renderNotificationsList();
+  updateNotificationBadge();
+}
+
+function renderNotificationsList() {
+  var container = document.getElementById('notificationsList');
+  var notifications = getNotifications();
+
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (notifications.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:0.88rem; padding: 20px 0;">لا توجد إشعارات حالياً</p>';
+    return;
+  }
+
+  notifications.forEach(n => {
+    var card = document.createElement('div');
+    card.className = `notification-item-card ${n.unread ? 'unread' : ''}`;
+    var iconMarkup = '';
+
+    if (n.type === 'success') {
+      iconMarkup = `<div class="notification-icon success"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div>`;
+    } else if (n.type === 'rejected' || n.type === 'deleted') {
+      iconMarkup = `<div class="notification-icon error"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg></div>`;
+    } else {
+      iconMarkup = `<div class="notification-icon pending"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>`;
     }
 
-    function initSidebarEvents() {
-      const openSidebarBtn = document.getElementById('open-sidebar-btn');
-      const closeSidebarBtn = document.getElementById('close-sidebar-btn');
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebar-overlay');
-
-      const archiveBtn = document.getElementById('archive-btn');
-      const archiveSubmenu = document.getElementById('archive-submenu');
-      const libraryBtn = document.getElementById('library-btn');
-      const librarySubmenu = document.getElementById('library-submenu');
-
-      const closeSidebar = () => {
-        if (sidebar && overlay) {
-          sidebar.classList.remove('open');
-          overlay.classList.remove('active');
-        }
-      };
-
-      if (openSidebarBtn && sidebar && overlay) {
-        openSidebarBtn.addEventListener('click', () => {
-          sidebar.classList.add('open');
-          overlay.classList.add('active');
-        });
-      }
-
-      if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
-      if (overlay) overlay.addEventListener('click', closeSidebar);
-
-      const toggleDropdown = (button, submenu) => {
-        if (!button || !submenu) return;
-        const isOpen = submenu.classList.contains('open');
-        const arrow = button.querySelector('.arrow-icon');
-
-        if (isOpen) {
-          submenu.classList.remove('open');
-          button.classList.remove('active');
-          if (arrow) arrow.classList.remove('open');
-        } else {
-          submenu.classList.add('open');
-          button.classList.add('active');
-          if (arrow) arrow.classList.add('open');
-        }
-      };
-
-      if (archiveBtn && archiveSubmenu) {
-        archiveBtn.addEventListener('click', () => toggleDropdown(archiveBtn, archiveSubmenu));
-      }
-      if (libraryBtn && librarySubmenu) {
-        libraryBtn.addEventListener('click', () => toggleDropdown(libraryBtn, librarySubmenu));
-      }
-    }
-
-    // --- NOTIFICATION HELPERS ---
-    function getNotifications() {
-      return JSON.parse(localStorage.getItem(STORAGE_NOTIFS_KEY) || '[]');
-    }
-
-    function updateNotificationBadge() {
-      const dropdownBadge = document.querySelector('.unread-badge');
-      const navRedDot = document.querySelector('.nav-unread-dot');
-      
-      const notifications = getNotifications();
-      const unreadCount = notifications.filter(n => n.unread).length;
-
-      if (unreadCount > 0) {
-        if (dropdownBadge) {
-          dropdownBadge.textContent = unreadCount;
-          dropdownBadge.style.display = 'inline-block';
-        }
-        if (navRedDot) navRedDot.style.display = 'inline-block';
-      } else {
-        if (dropdownBadge) dropdownBadge.style.display = 'none';
-        if (navRedDot) navRedDot.style.display = 'none';
-      }
-    }
-
-    function openNotificationsModal(e) {
-      if (e) e.preventDefault();
-      const dropdown = document.getElementById('profileDropdown');
-      if (dropdown) dropdown.classList.remove('show');
-      
-      const notifications = getNotifications().map(n => ({ ...n, unread: false }));
-      localStorage.setItem(STORAGE_NOTIFS_KEY, JSON.stringify(notifications));
-      updateNotificationBadge();
-
-      renderNotificationsList();
-      const modal = document.getElementById('notificationsModal');
-      if (modal) modal.classList.add('show');
-    }
-
-    function closeNotificationsModal() {
-      const modal = document.getElementById('notificationsModal');
-      if (modal) modal.classList.remove('show');
-    }
-
-    function clearAllNotifications() {
-      localStorage.setItem(STORAGE_NOTIFS_KEY, JSON.stringify([]));
-      renderNotificationsList();
-      updateNotificationBadge();
-    }
-
-    function renderNotificationsList() {
-      const container = document.getElementById('notificationsList');
-      const notifications = getNotifications();
-
-      if (!container) return;
-      container.innerHTML = '';
-
-      if (notifications.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:0.88rem; padding: 20px 0;">لا توجد إشعارات حالياً</p>';
-        return;
-      }
-
-      notifications.forEach(n => {
-        const card = document.createElement('div');
-        card.className = `notification-item-card ${n.unread ? 'unread' : ''}`;
-        let iconMarkup = '';
-        
-        if (n.type === 'success') {
-          iconMarkup = `<div class="notification-icon success"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div>`;
-        } else if (n.type === 'rejected' || n.type === 'deleted') {
-          iconMarkup = `<div class="notification-icon error"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg></div>`;
-        } else {
-          iconMarkup = `<div class="notification-icon pending"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>`;
-        }
-
-        card.innerHTML = `
+    card.innerHTML = `
           ${iconMarkup}
           <div class="notification-content">
             <h4 class="notification-title">${n.title}</h4>
@@ -166,20 +168,20 @@
             <span class="notification-time">${n.timestamp}</span>
           </div>
         `;
-        container.appendChild(card);
-      });
-    }
+    container.appendChild(card);
+  });
+}
 
-    // --- USER SESSION & PROFILE DROPDOWN ---
-    function checkUserSession() {
-      const sessionData = localStorage.getItem('currentUser');
-      const navbarRight = document.querySelector('.navbar-right');
+// --- USER SESSION & PROFILE DROPDOWN ---
+function checkUserSession() {
+  var sessionData = localStorage.getItem('currentUser');
+  var navbarRight = document.querySelector('.navbar-right');
 
-      if (sessionData && navbarRight) {
-        const user = JSON.parse(sessionData);
-        const isMale = user.gender === 'male';
+  if (sessionData && navbarRight) {
+    var user = JSON.parse(sessionData);
+    var isMale = user.gender === 'male';
 
-        const genderBadgeHTML = isMale ? `
+    var genderBadgeHTML = isMale ? `
           <span class="gender-badge gender-male">
             <svg class="gender-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="10" cy="14" r="5"></circle><path d="M19 5L13.5 10.5"></path><path d="M19 5h-5"></path><path d="M19 5v5"></path></svg>
             طالب
@@ -189,7 +191,7 @@
             طالبة
           </span>`;
 
-        navbarRight.innerHTML = `
+    navbarRight.innerHTML = `
           <div class="user-profile-wrapper">
             <button class="user-profile-badge" onclick="toggleProfileDropdown(event)">
               <img src="${user.avatar || 'assets/images/web/default_avatar.png'}" alt="${user.name}" class="profile-avatar" onError="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1565c0&color=fff'">
@@ -224,167 +226,167 @@
           </button>
         `;
 
-        updateNotificationBadge();
-      }
+    updateNotificationBadge();
+  }
+}
+
+function toggleProfileDropdown(e) {
+  e.stopPropagation();
+  var dropdown = document.getElementById('profileDropdown');
+  if (dropdown) dropdown.classList.toggle('show');
+}
+
+document.addEventListener('click', (e) => {
+  var dropdown = document.getElementById('profileDropdown');
+  if (dropdown && dropdown.classList.contains('show')) dropdown.classList.remove('show');
+});
+
+function logoutUser() {
+  var modal = document.getElementById('logoutModal');
+  if (modal) modal.classList.add('show');
+}
+
+function closeLogoutModal() {
+  var modal = document.getElementById('logoutModal');
+  if (modal) modal.classList.remove('show');
+}
+
+function confirmLogout() {
+  localStorage.removeItem('currentUser');
+  window.location.href = "/login";
+}
+
+function smoothNavigate(event, targetUrl) {
+  event.preventDefault();
+  document.body.classList.add('fade-out');
+  setTimeout(() => { window.location.href = targetUrl; }, 300);
+}
+
+var currentSubject = 'balagha';
+
+// --- CATEGORY SWITCHING & ROUTING ---
+function switchSubject(sectionId, subjectKey, btnElement) {
+  if (sectionId === 'recordings') {
+    currentSubject = subjectKey;
+  }
+
+  if (btnElement) {
+    var parentContainer = btnElement.closest('.category-buttons');
+    if (parentContainer) {
+      parentContainer.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+    }
+    btnElement.classList.add('active');
+  }
+
+  if (sectionId === 'recordings') {
+    loadSubjectRecordings(subjectKey);
+  } else {
+    filterStaticSection(sectionId, subjectKey);
+  }
+}
+
+function filterStaticSection(sectionId, subjectKey) {
+  var container = document.getElementById(sectionId + 'Container');
+  if (!container) return;
+
+  var cards = container.children;
+  Array.from(cards).forEach(card => {
+    var cardCategory = card.getAttribute('data-category');
+    if (!cardCategory || subjectKey === 'all' || cardCategory === subjectKey) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// --- YOUTUBE API LOGIC ---
+var currentSubjectVideos = [];
+var isExpanded = false;
+
+async function fetchPlaylistVideos(playlistId) {
+  if (!playlistId || playlistId.length < 10 || playlistId.startsWith("PLAYLIST_ID")) {
+    console.warn("Invalid or missing Playlist ID:", playlistId);
+    return [];
+  }
+
+  var endpoint = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${encodeURIComponent(playlistId)}&key=${YOUTUBE_API_KEY}`;
+
+  try {
+    var response = await fetch(endpoint);
+    if (!response.ok) {
+      console.warn(`YouTube API returned ${response.status} for playlist: ${playlistId}`);
+      return [];
     }
 
-    function toggleProfileDropdown(e) {
-      e.stopPropagation();
-      const dropdown = document.getElementById('profileDropdown');
-      if (dropdown) dropdown.classList.toggle('show');
-    }
+    var data = await response.json();
 
-    document.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('profileDropdown');
-      if (dropdown && dropdown.classList.contains('show')) dropdown.classList.remove('show');
-    });
+    return data.items
+      .filter(item => item.snippet && item.snippet.title !== "Private video" && item.snippet.title !== "Deleted video")
+      .map(item => {
+        var vId = item.snippet.resourceId.videoId;
+        var thumb = item.snippet.thumbnails?.maxres?.url ||
+          item.snippet.thumbnails?.high?.url ||
+          item.snippet.thumbnails?.medium?.url ||
+          'assets/images/web/default_cover.png';
 
-    function logoutUser() {
-      const modal = document.getElementById('logoutModal');
-      if (modal) modal.classList.add('show');
-    }
-
-    function closeLogoutModal() {
-      const modal = document.getElementById('logoutModal');
-      if (modal) modal.classList.remove('show');
-    }
-
-    function confirmLogout() {
-      localStorage.removeItem('currentUser');
-      location.reload();
-    }
-
-    function smoothNavigate(event, targetUrl) {
-      event.preventDefault();
-      document.body.classList.add('fade-out');
-      setTimeout(() => { window.location.href = targetUrl; }, 300);
-    }
-
-    let currentSubject = 'balagha';
-
-    // --- CATEGORY SWITCHING & ROUTING ---
-    function switchSubject(sectionId, subjectKey, btnElement) {
-      if (sectionId === 'recordings') {
-        currentSubject = subjectKey;
-      }
-
-      if (btnElement) {
-        const parentContainer = btnElement.closest('.category-buttons');
-        if (parentContainer) {
-          parentContainer.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
-        }
-        btnElement.classList.add('active');
-      }
-
-      if (sectionId === 'recordings') {
-        loadSubjectRecordings(subjectKey);
-      } else {
-        filterStaticSection(sectionId, subjectKey);
-      }
-    }
-
-    function filterStaticSection(sectionId, subjectKey) {
-      const container = document.getElementById(sectionId + 'Container');
-      if (!container) return;
-
-      const cards = container.children;
-      Array.from(cards).forEach(card => {
-        const cardCategory = card.getAttribute('data-category');
-        if (!cardCategory || subjectKey === 'all' || cardCategory === subjectKey) {
-          card.style.display = '';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
-
-    // --- YOUTUBE API LOGIC ---
-    let currentSubjectVideos = [];
-    let isExpanded = false;
-
-    async function fetchPlaylistVideos(playlistId) {
-      if (!playlistId || playlistId.length < 10 || playlistId.startsWith("PLAYLIST_ID")) {
-        console.warn("Invalid or missing Playlist ID:", playlistId);
-        return [];
-      }
-
-      const endpoint = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${encodeURIComponent(playlistId)}&key=${YOUTUBE_API_KEY}`;
-
-      try {
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          console.warn(`YouTube API returned ${response.status} for playlist: ${playlistId}`);
-          return [];
-        }
-
-        const data = await response.json();
-
-        return data.items
-          .filter(item => item.snippet && item.snippet.title !== "Private video" && item.snippet.title !== "Deleted video")
-          .map(item => {
-            const vId = item.snippet.resourceId.videoId;
-            const thumb = item.snippet.thumbnails?.maxres?.url || 
-                          item.snippet.thumbnails?.high?.url || 
-                          item.snippet.thumbnails?.medium?.url || 
-                          'assets/images/web/default_cover.png';
-            
-            return {
-              title: item.snippet.title,
-              thumbnail: thumb,
-              videoId: vId
-            };
-          });
-      } catch (error) {
-        console.error("Failed to load recordings:", error);
-        return [];
-      }
-    }
-
-    async function loadSubjectRecordings(subjectKey) {
-      const container = document.getElementById("recordingsContainer");
-      const viewAllBtn = document.querySelector("#recordings .view-all-link");
-      
-      if (!container) return;
-
-      container.innerHTML = `<p style="text-align: center; color: #64748b; grid-column: 1/-1;">جاري تحميل التسجيلات...</p>`;
-
-      const playlistId = PLAYLIST_MAP[subjectKey];
-      currentSubjectVideos = await fetchPlaylistVideos(playlistId);
-      isExpanded = false;
-
-      if (currentSubjectVideos.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">لا توجد تسجيلات متاحة حالياً لهذا المقرَّر.</p>`;
-        if (viewAllBtn) viewAllBtn.style.display = "none";
-        return;
-      }
-
-      if (viewAllBtn) {
-        viewAllBtn.style.display = currentSubjectVideos.length > 3 ? "inline-block" : "none";
-        viewAllBtn.onclick = (e) => {
-          e.preventDefault();
-          toggleViewAllRecordings();
+        return {
+          title: item.snippet.title,
+          thumbnail: thumb,
+          videoId: vId
         };
-      }
+      });
+  } catch (error) {
+    console.error("Failed to load recordings:", error);
+    return [];
+  }
+}
 
-      renderRecordingsGrid();
-    }
+async function loadSubjectRecordings(subjectKey) {
+  var container = document.getElementById("recordingsContainer");
+  var viewAllBtn = document.querySelector("#recordings .view-all-link");
 
-    function renderRecordingsGrid() {
-      const container = document.getElementById("recordingsContainer");
-      const viewAllBtn = document.querySelector("#recordings .view-all-link");
-      if (!container) return;
+  if (!container) return;
 
-      container.innerHTML = "";
+  container.innerHTML = `<p style="text-align: center; color: #64748b; grid-column: 1/-1;">جاري تحميل التسجيلات...</p>`;
 
-      const visibleVideos = isExpanded ? currentSubjectVideos : currentSubjectVideos.slice(0, 3);
-      const subjectLabel = SUBJECT_NAMES[currentSubject] || "المقرر الدراسي";
+  var playlistId = PLAYLIST_MAP[subjectKey];
+  currentSubjectVideos = await fetchPlaylistVideos(playlistId);
+  isExpanded = false;
 
-      visibleVideos.forEach(video => {
-        const card = document.createElement("div");
-        card.className = "recording-card";
-        card.onclick = () => openVideoModal(video.videoId, video.title);
+  if (currentSubjectVideos.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">لا توجد تسجيلات متاحة حالياً لهذا المقرَّر.</p>`;
+    if (viewAllBtn) viewAllBtn.style.display = "none";
+    return;
+  }
 
-        card.innerHTML = `
+  if (viewAllBtn) {
+    viewAllBtn.style.display = currentSubjectVideos.length > 3 ? "inline-block" : "none";
+    viewAllBtn.onclick = (e) => {
+      e.preventDefault();
+      toggleViewAllRecordings();
+    };
+  }
+
+  renderRecordingsGrid();
+}
+
+function renderRecordingsGrid() {
+  var container = document.getElementById("recordingsContainer");
+  var viewAllBtn = document.querySelector("#recordings .view-all-link");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  var visibleVideos = isExpanded ? currentSubjectVideos : currentSubjectVideos.slice(0, 3);
+  var subjectLabel = SUBJECT_NAMES[currentSubject] || "المقرر الدراسي";
+
+  visibleVideos.forEach(video => {
+    var card = document.createElement("div");
+    card.className = "recording-card";
+    card.onclick = () => openVideoModal(video.videoId, video.title);
+
+    card.innerHTML = `
           <div class="recording-thumb-wrapper">
             <img src="${video.thumbnail}" alt="${video.title}" class="recording-thumb">
             <div class="play-icon-overlay">
@@ -399,74 +401,75 @@
           </div>
         `;
 
-        container.appendChild(card);
-      });
+    container.appendChild(card);
+  });
 
-      if (viewAllBtn) {
-        viewAllBtn.textContent = isExpanded ? "عرض أقل ←" : "← عرض الكل";
-      }
-    }
+  if (viewAllBtn) {
+    viewAllBtn.textContent = isExpanded ? "عرض أقل ←" : "← عرض الكل";
+  }
+}
 
-    function toggleViewAllRecordings() {
-      isExpanded = !isExpanded;
-      renderRecordingsGrid();
-    }
+function toggleViewAllRecordings() {
+  isExpanded = !isExpanded;
+  renderRecordingsGrid();
+}
 
-    function openVideoModal(videoId, title) {
-      const modal = document.getElementById("videoPlayerModal");
-      const iframe = document.getElementById("youtubeIframe");
-      const titleEl = document.getElementById("modalVideoTitle");
+function openVideoModal(videoId, title) {
+  var modal = document.getElementById("videoPlayerModal");
+  var iframe = document.getElementById("youtubeIframe");
+  var titleEl = document.getElementById("modalVideoTitle");
 
-      if (modal && iframe) {
-        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-        if (titleEl) titleEl.textContent = title || "مشاهدة التسجيل";
-        modal.classList.add("show");
-      }
-    }
+  if (modal && iframe) {
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    if (titleEl) titleEl.textContent = title || "مشاهدة التسجيل";
+    modal.classList.add("show");
+  }
+}
 
-    function closeVideoModal() {
-      const modal = document.getElementById("videoPlayerModal");
-      const iframe = document.getElementById("youtubeIframe");
+function closeVideoModal() {
+  var modal = document.getElementById("videoPlayerModal");
+  var iframe = document.getElementById("youtubeIframe");
 
-      if (modal && iframe) {
-        iframe.src = "";
-        modal.classList.remove("show");
-      }
-    }
+  if (modal && iframe) {
+    iframe.src = "";
+    modal.classList.remove("show");
+  }
+}
 
-    function handleModalBackdropClick(event) {
-      if (event.target.id === 'videoPlayerModal') {
-        closeVideoModal();
-      }
-    }
+function handleModalBackdropClick(event) {
+  if (event.target.id === 'videoPlayerModal') {
+    closeVideoModal();
+  }
+}
 
-    // --- OTHER DATA FETCHING ---
-    async function loadArchiveData() {
-      try {
-        const res = await fetch('/data/archive.json');
-        return await res.json();
-      } catch (err) {
-        console.error('Error fetching archive.json:', err);
-        return { assignments: [], whiteboards: [], photos: [] };
-      }
-    }
+// --- OTHER DATA FETCHING ---
+async function loadArchiveData() {
+  try {
+    var res = await fetch('data/archive.json');
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching archive.json:', err);
+    return { assignments: [], whiteboards: [], photos: [] };
+  }
+}
 
-    // --- INITIALIZATION ---
-    async function initArchivePage() {
-      checkUserSession();
-      initSidebarEvents();
+// --- INITIALIZATION ---
+window.initArchivePage = async function() {
+  checkUserSession();
+  initSidebarEvents();
 
-      // Load active playlist automatically
-      loadSubjectRecordings('tawheed');
+  // Load active playlist automatically
+  loadSubjectRecordings('tawheed');
 
-      // Load static content from archive.json
-      const data = await loadArchiveData();
+  // Load static content from archive.json
+  var data = await loadArchiveData();
 
-      // Render Assignments with Category Data Tag
-      const assContainer = document.getElementById('assignmentsContainer');
-      if (assContainer && data.assignments) {
-        data.assignments.forEach(ass => {
-          assContainer.innerHTML += `
+  // Render Assignments with Category Data Tag
+  var assContainer = document.getElementById('assignmentsContainer');
+  if (assContainer && data.assignments) {
+    assContainer.innerHTML = ''; // Pastikan div bersih sebelum diisi ulang
+    data.assignments.forEach(ass => {
+      assContainer.innerHTML += `
             <div class="book-row-card" data-category="${ass.category || 'balagha'}">
               <div class="book-row-right">
                 <img src="${ass.coverUrl}" alt="${ass.title}" class="book-row-cover">
@@ -486,28 +489,30 @@
               </div>
             </div>
           `;
-        });
-      }
+    });
+  }
 
-      // Render Whiteboards & Photos with Category Data Tags
-      ['whiteboards', 'photos'].forEach(key => {
-        const container = document.getElementById(key + 'Container');
-        if (container && data[key]) {
-          data[key].forEach(item => {
-            container.innerHTML += `
+  // Render Whiteboards & Photos with Category Data Tags
+  ['whiteboards', 'photos'].forEach(key => {
+    var container = document.getElementById(key + 'Container');
+    if (container && data[key]) {
+      container.innerHTML = ''; // Pastikan div bersih sebelum diisi ulang
+      data[key].forEach(item => {
+        container.innerHTML += `
               <div class="photo-card" data-category="${item.category || 'balagha'}">
                 <img src="${item.imageUrl}" alt="photo" class="photo-preview">
                 <div class="photo-date">${item.date}</div>
                 <div class="photo-meta">${item.meta}</div>
               </div>
             `;
-          });
-        }
       });
     }
+  });
+};
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initArchivePage);
-    } else {
-      initArchivePage();
-    }
+setTimeout(() => {
+  if (typeof window !== 'undefined' && window.initArchivePage) {
+    window.initArchivePage();
+  }
+}, 0);
+

@@ -1,10 +1,20 @@
 "use client";
-import React from 'react';
+import React, { useEffect } from 'react';
 import Script from 'next/script';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export default function Page() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Jika BELUM login, tendang ke halaman login
+    if (!localStorage.getItem('currentUser')) {
+      router.push('/login');
+    }
+  }, [router]);
+
   return (
     <div className="mobile-container">
       <Navbar />
@@ -49,6 +59,7 @@ export default function Page() {
           <button class="cat-btn" onclick="switchSubject('recordings', 'nahw', this)">النحو</button>
           <button class="cat-btn" onclick="switchSubject('recordings', 'adab', this)">تاريخ الأدب</button>
           <button class="cat-btn" onclick="switchSubject('recordings', 'indonesian', this)">اللغة الإندونيسية</button>
+          <button class="cat-btn" onclick="switchSubject('recordings', 'pkn', this)">التربية الوطنية</button>
         </div>
         
       </div>
@@ -77,6 +88,7 @@ export default function Page() {
           <button class="cat-btn" onclick="switchSubject('assignments', 'nahw', this)">النحو</button>
           <button class="cat-btn" onclick="switchSubject('assignments', 'adab', this)">تاريخ الأدب</button>
           <button class="cat-btn" onclick="switchSubject('assignments', 'indonesian', this)">اللغة الإندونيسية</button>
+          <button class="cat-btn" onclick="switchSubject('assignments', 'pkn', this)">التربية الوطنية</button>
         </div>
         
       </div>
@@ -104,6 +116,7 @@ export default function Page() {
           <button class="cat-btn" onclick="switchSubject('whiteboards', 'nahw', this)">النحو</button>
           <button class="cat-btn" onclick="switchSubject('whiteboards', 'adab', this)">تاريخ الأدب</button>
           <button class="cat-btn" onclick="switchSubject('whiteboards', 'indonesian', this)">اللغة الإندونيسية</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'pkn', this)">التربية الوطنية</button>
         </div>
         
       </div>
@@ -131,6 +144,7 @@ export default function Page() {
           <button class="cat-btn" onclick="switchSubject('photos', 'nahw', this)">النحو</button>
           <button class="cat-btn" onclick="switchSubject('photos', 'adab', this)">تاريخ الأدب</button>
           <button class="cat-btn" onclick="switchSubject('photos', 'indonesian', this)">اللغة الإندونيسية</button>
+          <button class="cat-btn" onclick="switchSubject('photos', 'pkn', this)">التربية الوطنية</button>
         </div>
         
       </div>
@@ -186,7 +200,15 @@ export default function Page() {
 
   
 ` }} />
-      <Script src="/archive-script.js" strategy="lazyOnload" />
+      <Script 
+        src="/archive-script.js" 
+        strategy="lazyOnload" 
+        onReady={() => {
+          if (typeof window !== 'undefined' && (window as any).initArchivePage) {
+            (window as any).initArchivePage();
+          }
+        }}
+      />
       <Footer />
     </div>
   );
