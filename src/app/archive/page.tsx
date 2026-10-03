@@ -18,7 +18,8 @@ export default function Page() {
   return (
     <div className="mobile-container">
       <Navbar />
-      <link rel="stylesheet" href="/dashboard.css" />\n      <link rel="stylesheet" href="/archive.css" />
+      <link rel="stylesheet" href="/dashboard.css" />
+      <link rel="stylesheet" href="/archive.css" />
       <div dangerouslySetInnerHTML={{ __html: `
   
 

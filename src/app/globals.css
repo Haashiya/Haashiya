@@ -181,3 +181,30 @@ img {
   color: var(--color-primary-500);
   opacity: 1; /* override browser default opacity */
 }
+
+/* ==========================================================================
+   SAFEGUARD: Popup/modal bawaan halaman legacy (YouTube, notifikasi, logout, dll)
+   harus tersembunyi sejak awal. Sebelumnya aturan sembunyi hanya ada di
+   dashboard.css yang baru dimuat setelah halaman tampil saat pindah halaman,
+   sehingga popup sempat muncul tanpa style ("ikut refresh").
+   ========================================================================== */
+.logout-modal-overlay:not(.show),
+.upload-modal-overlay:not(.show),
+.admin-modal-overlay:not(.show) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.logout-modal-overlay.show,
+.upload-modal-overlay.show,
+.admin-modal-overlay.show {
+  visibility: visible;
+}
+
