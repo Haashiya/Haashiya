@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { signSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,7 +52,10 @@ export async function POST(req: NextRequest) {
       studentId: data.studentId || '',
     };
 
-    return NextResponse.json({ user: userSession }, { status: 200 });
+    return NextResponse.json(
+      { user: userSession, token: signSession(String(data.id), userSession.role) },
+      { status: 200 }
+    );
 
   } catch (err) {
     console.error('Login API Error:', err);

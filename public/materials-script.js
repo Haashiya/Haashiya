@@ -214,7 +214,7 @@
     }
   
     function confirmLogout() {
-      localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentUser'); localStorage.removeItem('authToken');
       location.reload();
     }
   
@@ -301,127 +301,152 @@
       });
     }
   
-    function openAdminQueueModal() {
-      renderPendingQueueList();
+    async function openAdminQueueModal() {
       document.getElementById('adminQueueModal').classList.add('show');
+      await renderPendingQueueList();
     }
   
     function closeAdminQueueModal() {
       document.getElementById('adminQueueModal').classList.remove('show');
     }
   
-    function getPendingBooks() {
-      return JSON.parse(localStorage.getItem(STORAGE_PENDING_KEY) || '[]');
-    }
-  
-    function updatePendingBadgeCount() {
-      var badge = document.getElementById('pendingBadgeCount');
-      if (badge) badge.textContent = getPendingBooks().length;
-    }
-  
-    function renderPendingQueueList() {
-      var container = document.getElementById('pendingBooksList');
-      var pendingBooks = getPendingBooks();
-  
-      if (!container) return;
-      container.innerHTML = '';
-  
-      if (pendingBooks.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:0.88rem; padding: 20px 0;">لا توجد كتب معلقة حالياً</p>';
-        return;
-      }
-  
-      pendingBooks.forEach((book, index) => {
-        var card = document.createElement('div');
-        card.className = 'pending-item-card';
-        var coverImage = book.coverUrl || 'assets/images/covers/badee3tareekh.png';
-  
-        card.innerHTML = `
-          <div class="pending-item-left">
-            <img src="${coverImage}" alt="${book.title}" class="pending-book-cover">
-            <div class="pending-book-info">
-              <strong class="pending-book-title">${book.title}</strong>
-              <span class="pending-book-meta">المؤلف: ${book.author} | الفن: ${book.theme}</span>
-            </div>
-          </div>
-  
-          <div class="pending-action-btns">
-            <a href="${book.pdfUrl}" target="_blank" class="action-icon-btn btn-view-pending" title="معاينة الكتاب">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </a>
-            <button class="btn-approve" onclick="approveBook(${index})" title="قبول الطلب">قبول</button>
-            <button class="btn-reject" onclick="rejectBook(${index})" title="رفض الطلب">رفض</button>
-          </div>
-        `;
-        container.appendChild(card);
+    // --- ANTREAN PENDING (Supabase, lewat API admin) ---
+    var pendingBooksCache = [];
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
-  
-    function approveBook(index) {
-      var pending = getPendingBooks();
-      var approved = JSON.parse(localStorage.getItem(STORAGE_APPROVED_KEY) || '[]');
-  
-      var bookToApprove = pending.splice(index, 1)[0];
-      if (!bookToApprove) return;
-  
-      approved.unshift(bookToApprove);
-  
-      localStorage.setItem(STORAGE_PENDING_KEY, JSON.stringify(pending));
-      localStorage.setItem(STORAGE_APPROVED_KEY, JSON.stringify(approved));
-  
-      addNotification(
-        'تم القبول بنجاح! 🎉', 
-        `تمت الموافقة على كتاب "${bookToApprove.title}" وهو متاح الآن في المكتبة العامة.`, 
-        'success'
-      );
-  
-      renderPendingQueueList();
-      updatePendingBadgeCount();
-      renderApprovedBooksOnSurface();
+
+    async function fetchPendingBooks() {
+      var res = await authFetch('/api/admin/pending');
+      var json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load pending books');
+      pendingBooksCache = json.data || [];
+      return pendingBooksCache;
     }
-  
-    function rejectBook(index) {
-      var pending = getPendingBooks();
-      var bookToReject = pending.splice(index, 1)[0];
-      
-      localStorage.setItem(STORAGE_PENDING_KEY, JSON.stringify(pending));
-  
-      if (bookToReject) {
+
+    async function updatePendingBadgeCount() {
+      var badge = document.getElementById('pendingBadgeCount');
+      if (!badge) return;
+      try {
+        await fetchPendingBooks();
+        badge.textContent = pendingBooksCache.length;
+      } catch (err) {
+        console.error('Pending count error:', err);
+      }
+    }
+
+    async function renderPendingQueueList() {
+      var container = document.getElementById('pendingBooksList');
+      if (!container) return;
+
+      try {
+        var pendingBooks = await fetchPendingBooks();
+        container.innerHTML = '';
+
+        var badge = document.getElementById('pendingBadgeCount');
+        if (badge) badge.textContent = pendingBooks.length;
+
+        if (pendingBooks.length === 0) {
+          container.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:0.88rem; padding: 20px 0;">لا توجد كتب معلقة حالياً</p>';
+          return;
+        }
+
+        pendingBooks.forEach(book => {
+          var card = document.createElement('div');
+          card.className = 'pending-item-card';
+          var coverImage = book.coverUrl || 'assets/images/covers/badee3tareekh.png';
+          var bookId = escapeHtml(book.id);
+
+          card.innerHTML = `
+            <div class="pending-item-left">
+              <img src="${escapeHtml(coverImage)}" alt="${escapeHtml(book.title)}" class="pending-book-cover">
+              <div class="pending-book-info">
+                <strong class="pending-book-title">${escapeHtml(book.title)}</strong>
+                <span class="pending-book-meta">المؤلف: ${escapeHtml(book.author)} | الفن: ${escapeHtml(book.theme)}</span>
+              </div>
+            </div>
+
+            <div class="pending-action-btns">
+              <a href="${escapeHtml(book.pdfUrl)}" target="_blank" class="action-icon-btn btn-view-pending" title="معاينة الكتاب">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </a>
+              <button class="btn-approve" onclick="approveBook('${bookId}')" title="قبول الطلب">قبول</button>
+              <button class="btn-reject" onclick="rejectBook('${bookId}')" title="رفض الطلب">رفض</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Pending queue error:', err);
+        container.innerHTML = '<p style="text-align:center; color:#ef4444; font-size:0.88rem; padding: 20px 0;">تعذر تحميل قائمة المراجعة، يُرجَى تسجيل الدخول مرة أخرى</p>';
+      }
+    }
+
+    async function approveBook(id) {
+      try {
+        var res = await authFetch('/api/admin/approve', { method: 'POST', body: JSON.stringify({ id: id }) });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Approve failed');
+
         addNotification(
-          'تم رفض الطلب ❌', 
-          `عذراً، لم تتم الموافقة على كتاب "${bookToReject.title}" من قبل الإدارة.`, 
+          'تم القبول بنجاح! 🎉',
+          `تمت الموافقة على كتاب "${data.title}" وهو متاح الآن في المكتبة العامة.`,
+          'success'
+        );
+
+        await renderPendingQueueList();
+        loadApprovedBooks();
+      } catch (err) {
+        console.error('Approve error:', err);
+        showErrorToast('حدث خطأ أثناء قبول الكتاب');
+      }
+    }
+
+    async function rejectBook(id) {
+      try {
+        var res = await authFetch('/api/admin/reject', { method: 'POST', body: JSON.stringify({ id: id }) });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Reject failed');
+
+        addNotification(
+          'تم رفض الطلب ❌',
+          `عذراً، لم تتم الموافقة على كتاب "${data.title}" من قبل الإدارة.`,
           'rejected'
         );
+
+        await renderPendingQueueList();
+      } catch (err) {
+        console.error('Reject error:', err);
+        showErrorToast('حدث خطأ أثناء رفض الكتاب');
       }
-  
-      renderPendingQueueList();
-      updatePendingBadgeCount();
     }
   
-    function listenToApprovedBooks() {
-  var container = document.querySelector('.main-card-section:last-of-type .book-list-container');
-  if (!container) return;
+    function renderApprovedBooks(snapshot) {
+      var container = document.querySelector('.main-card-section:last-of-type .book-list-container');
+      if (!container) return;
 
-  var sessionData = localStorage.getItem('currentUser');
-  var user = sessionData ? JSON.parse(sessionData) : null;
-  var isAdmin = user && user.role === 'admin';
+      var sessionData = localStorage.getItem('currentUser');
+      var user = sessionData ? JSON.parse(sessionData) : null;
+      var isAdmin = user && user.role === 'admin';
 
-  db.collection('approved_books')
-    .orderBy('createdAt', 'desc')
-    .onSnapshot((snapshot) => {
       document.querySelectorAll('.user-approved-card').forEach(el => el.remove());
 
       snapshot.forEach((doc) => {
         var book = doc.data();
+        var theme = book.category || book.theme || '';
+        var coverImage = book.coverUrl || 'assets/images/covers/badee3tareekh.png';
         var card = document.createElement('div');
         card.className = 'book-row-card user-approved-card';
         card.setAttribute('data-category', 'general');
 
         var adminActions = isAdmin ? `
-          <button class="action-icon-btn admin-delete-btn" onclick="removeApprovedBook('${doc.id}')" title="حذف الكتاب">
+          <button class="action-icon-btn admin-delete-btn" onclick="removeApprovedBook('${escapeHtml(doc.id)}')" title="حذف الكتاب">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -431,48 +456,81 @@
 
         card.innerHTML = `
           <div class="book-row-right">
-            <img src="${book.coverUrl}" alt="${book.title}" class="book-row-cover">
+            <img src="${escapeHtml(coverImage)}" alt="${escapeHtml(book.title)}" class="book-row-cover">
             <div class="book-row-details">
-              <h3 class="book-row-title">${book.title}</h3>
-              <p class="book-row-author">${book.author}</p>
-              <span class="book-row-meta">المكتبة العامة - الفن: ${book.theme}</span>
+              <h3 class="book-row-title">${escapeHtml(book.title)}</h3>
+              <p class="book-row-author">${escapeHtml(book.author)}</p>
+              <span class="book-row-meta">المكتبة العامة - الفن: ${escapeHtml(theme)}</span>
             </div>
           </div>
           <div class="book-row-actions">
             ${adminActions}
-            <a href="${book.pdfUrl}" target="_blank" class="action-icon-btn" title="قراءة">
+            <a href="${escapeHtml(book.pdfUrl)}" target="_blank" class="action-icon-btn" title="قراءة">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </a>
-            <a href="${book.pdfUrl}" download="${book.title}.pdf" class="action-icon-btn" title="تحميل">
+            <a href="${escapeHtml(book.pdfUrl)}" download="${escapeHtml(book.title)}.pdf" class="action-icon-btn" title="تحميل">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </a>
           </div>
         `;
         container.appendChild(card);
       });
-    });
+    }
+
+    // Pembaruan otomatis (realtime) dari tabel approved_books di Supabase
+    function listenToApprovedBooks() {
+      db.collection('approved_books')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot(renderApprovedBooks);
+    }
+
+    // Muat ulang manual (dipakai setelah approve / hapus)
+    async function loadApprovedBooks() {
+      try {
+        var snapshot = await db.collection('approved_books').orderBy('createdAt', 'desc').get();
+        renderApprovedBooks(snapshot);
+      } catch (err) {
+        console.error('Load approved books error:', err);
+      }
+    }
+
+  // --- AUTH HELPER: kirim token sesi ke API server ---
+function authFetch(url, options) {
+  var token = localStorage.getItem('authToken');
+  var headers = Object.assign({ 'Content-Type': 'application/json' }, (options && options.headers) || {});
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  return fetch(url, Object.assign({}, options, { headers: headers }));
 }
 
-  // --- HELPER FUNCTION FOR FIREBASE STORAGE ---
-async function uploadFileToStorage(file, folderName) {
-  // Creates a unique path in bucket e.g., 'pdfs/1726732000000_book.pdf'
-  var fileRef = storage.ref(`${folderName}/${Date.now()}_${file.name}`);
-  var snapshot = await fileRef.put(file);
-  return await snapshot.getDownloadURL();
-}
-
-function convertFileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    var reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
+// --- UPLOAD FILE KE CLOUDFLARE R2 (presigned URL), mengembalikan URL publik ---
+async function uploadFileToR2(file) {
+  var res = await authFetch('/api/upload', {
+    method: 'POST',
+    body: JSON.stringify({ filename: file.name, contentType: file.type })
   });
+  var data = await res.json();
+  if (!res.ok) {
+    var uploadError = new Error(data.error || 'Failed to get upload URL');
+    uploadError.status = res.status;
+    throw uploadError;
+  }
+
+  var put = await fetch(data.url, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file
+  });
+  if (!put.ok) throw new Error('R2 upload failed (' + put.status + ')');
+
+  return data.publicUrl;
 }
 
-  // --- UPDATED SUBMIT HANDLER ---
+var isSubmittingBook = false;
+
+  // --- SUBMIT HANDLER: upload ke R2, simpan hanya URL ke Supabase (pending_books) ---
   async function handleBookSubmit(e) {
   e.preventDefault();
+  if (isSubmittingBook) return;
 
   var title = document.getElementById('bookTitle').value.trim();
   var author = document.getElementById('bookAuthor').value.trim();
@@ -485,40 +543,48 @@ function convertFileToBase64(file) {
     return;
   }
 
-  // Firestore documents have a 1MB size limit per document
-  if (pdfFile.size > 800 * 1024) {
-    showErrorToast('حجم ملف PDF يجب أن يكون أقل من 800 كيلوبايت');
+  if (!localStorage.getItem('authToken')) {
+    showErrorToast('انتهت الجلسة، يُرجَى تسجيل الدخول مرة أخرى');
     return;
   }
 
+  if (pdfFile.size > 25 * 1024 * 1024) {
+    showErrorToast('حجم ملف PDF يجب أن يكون أقل من 25 ميجابايت');
+    return;
+  }
+
+  if (coverFile && coverFile.size > 5 * 1024 * 1024) {
+    showErrorToast('حجم صورة الغلاف يجب أن يكون أقل من 5 ميجابايت');
+    return;
+  }
+
+  isSubmittingBook = true;
   try {
-    showToastNotification('جاري تجهيز الملفات...');
+    showToastNotification('جاري رفع الملفات...');
 
-    // Convert PDF to Base64 string
-    var pdfUrl = await convertFileToBase64(pdfFile);
+    var pdfUrl = await uploadFileToR2(pdfFile);
+    var coverUrl = coverFile ? await uploadFileToR2(coverFile) : null;
 
-    // Convert Cover to Base64 string if present, else fallback
-    var coverUrl = 'assets/images/covers/badee3tareekh.png';
-    if (coverFile) {
-      coverUrl = await convertFileToBase64(coverFile);
-    }
-
-    // Save directly to Firestore
-    await db.collection('pending_books').add({
-      title,
-      author,
-      theme,
-      pdfUrl,
-      coverUrl,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    var res = await authFetch('/api/books/pending', {
+      method: 'POST',
+      body: JSON.stringify({ title: title, author: author, theme: theme, pdfUrl: pdfUrl, coverUrl: coverUrl })
     });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save pending book');
 
     addNotification('طلب إضافة كتاب', `تم إرسال طلب إضافة كتاب "${title}" بنجاح، وهو قيد مراجعة الإدارة.`, 'pending');
     closeUploadModal();
     showToastNotification('تم طلب رفع الكتاب بنجاح!');
+    updatePendingBadgeCount();
   } catch (err) {
-    console.error('Base64 Upload Error:', err);
-    showErrorToast('حدث خطأ أثناء حفظ الكتاب');
+    console.error('Upload Error:', err);
+    if (err && err.status === 401) {
+      showErrorToast('انتهت الجلسة، يُرجَى تسجيل الدخول مرة أخرى');
+    } else {
+      showErrorToast('حدث خطأ أثناء حفظ الكتاب');
+    }
+  } finally {
+    isSubmittingBook = false;
   }
 }
   
@@ -578,9 +644,16 @@ function closeDeleteBookModal() {
 async function confirmDeleteBook() {
   if (currentDeletingDocId) {
     try {
-      await db.collection('approved_books').doc(currentDeletingDocId).delete();
+      var res = await authFetch('/api/admin/delete', {
+        method: 'POST',
+        body: JSON.stringify({ id: currentDeletingDocId })
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+
       closeDeleteBookModal();
       showErrorToast('تم حذف الكتاب بنجاح من المكتبة العامة');
+      loadApprovedBooks();
     } catch (err) {
       console.error('Delete Error:', err);
       showErrorToast('حدث خطأ أثناء حذف الكتاب');

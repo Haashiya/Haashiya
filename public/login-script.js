@@ -27,6 +27,7 @@
         // Login successful
         const userSession = data.user;
         localStorage.setItem('currentUser', JSON.stringify(userSession));
+        if (data.token) localStorage.setItem('authToken', data.token);
         
         messageDiv.className = "message success";
         messageDiv.textContent = "تم تسجيل الدخول بنجاح! جاري التوجيه...";

@@ -252,7 +252,7 @@ function closeLogoutModal() {
 }
 
 function confirmLogout() {
-  localStorage.removeItem('currentUser');
+  localStorage.removeItem('currentUser'); localStorage.removeItem('authToken');
   window.location.href = "/login";
 }
 

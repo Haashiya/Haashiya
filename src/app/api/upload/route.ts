@@ -1,17 +1,21 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth";
+import { r2, getR2PublicBase } from "@/lib/r2";
 
-const r2 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
-  },
-});
+const ALLOWED_TYPES: Record<string, string> = {
+  "application/pdf": "pdf",
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
 
 export async function POST(req: NextRequest) {
+  // Hanya user yang sudah login yang boleh meminta URL upload
+  const auth = requireUser(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const { filename, contentType } = await req.json();
 
@@ -19,24 +23,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
     }
 
-    // Generate a unique file name to avoid collisions
-    const fileExtension = filename.split('.').pop();
-    const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
+    const extension = ALLOWED_TYPES[contentType];
+    if (!extension) {
+      return NextResponse.json({ error: "Tipe file tidak diizinkan (hanya PDF, PNG, JPG, WEBP)" }, { status: 400 });
+    }
+
+    const publicBase = getR2PublicBase();
+    if (!publicBase) {
+      return NextResponse.json({ error: "NEXT_PUBLIC_R2_PUBLIC_URL belum diatur di .env.local" }, { status: 500 });
+    }
+
+    // Nama file unik agar tidak bertabrakan
+    const folder = contentType === "application/pdf" ? "books/pdf" : "books/cover";
+    const objectKey = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${extension}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
-      Key: uniqueFilename,
+      Key: objectKey,
       ContentType: contentType,
     });
 
-    // Generate presigned URL valid for 15 minutes (900 seconds)
+    // Presigned URL berlaku 15 menit (900 detik)
     const signedUrl = await getSignedUrl(r2, command, { expiresIn: 900 });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       url: signedUrl,
-      objectKey: uniqueFilename,
-      // Change 'hasyiyah-files' to your actual bucket name, and 'pub-xxxx' to your R2 public dev URL if enabled
-      publicUrl: `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${uniqueFilename}` 
+      objectKey,
+      publicUrl: `${publicBase}/${objectKey}`,
     });
   } catch (error) {
     console.error("Error generating presigned URL:", error);

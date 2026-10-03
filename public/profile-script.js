@@ -538,7 +538,7 @@ async function handleResetPassword(e) {
     });
 
     function logoutUser() {
-      localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentUser'); localStorage.removeItem('authToken');
       window.location.href = '/login';
     }
 

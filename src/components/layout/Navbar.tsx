@@ -241,7 +241,7 @@ export default function Navbar() {
                   <div style={{ height: '1px', backgroundColor: '#D1D5DB', margin: '4px 0' }}></div>
 
                   <button onClick={() => {
-                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('currentUser'); localStorage.removeItem('authToken');
                     setIsLoggedIn(false);
                     setIsProfileOpen(false);
                     setUserData(null);
