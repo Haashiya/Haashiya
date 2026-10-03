@@ -181,7 +181,12 @@
           </button>
         `;
   
-        if (user.role === 'admin') {
+      }
+
+      // Tombol antrean admin (jam pasir): tampil untuk role admin, tidak bergantung pada .navbar-right
+      if (sessionData) {
+        var sessionUser = JSON.parse(sessionData);
+        if (sessionUser.role === 'admin') {
           var adminBtn = document.getElementById('adminQueueBtn');
           if (adminBtn) adminBtn.style.display = 'inline-flex';
           updatePendingBadgeCount();
@@ -334,7 +339,7 @@
         await fetchPendingBooks();
         badge.textContent = pendingBooksCache.length;
       } catch (err) {
-        console.error('Pending count error:', err);
+        if (!isSessionExpiredError(err)) console.error('Pending count error:', err);
       }
     }
 
@@ -383,8 +388,12 @@
           container.appendChild(card);
         });
       } catch (err) {
+        if (isSessionExpiredError(err)) {
+          container.innerHTML = '<p style="text-align:center; color:#ef4444; font-size:0.88rem; padding: 20px 0;">' + SESSION_EXPIRED_MSG + '<br><a href="/login" style="color:#1565c0; font-weight:700;">تسجيل الدخول</a></p>';
+          return;
+        }
         console.error('Pending queue error:', err);
-        container.innerHTML = '<p style="text-align:center; color:#ef4444; font-size:0.88rem; padding: 20px 0;">تعذر تحميل قائمة المراجعة، يُرجَى تسجيل الدخول مرة أخرى</p>';
+        container.innerHTML = '<p style="text-align:center; color:#ef4444; font-size:0.88rem; padding: 20px 0;">تعذر تحميل قائمة المراجعة، يُرجَى المحاولة لاحقاً</p>';
       }
     }
 
@@ -403,6 +412,7 @@
         await renderPendingQueueList();
         loadApprovedBooks();
       } catch (err) {
+        if (isSessionExpiredError(err)) { showErrorToast(SESSION_EXPIRED_MSG); return; }
         console.error('Approve error:', err);
         showErrorToast('حدث خطأ أثناء قبول الكتاب');
       }
@@ -422,6 +432,7 @@
 
         await renderPendingQueueList();
       } catch (err) {
+        if (isSessionExpiredError(err)) { showErrorToast(SESSION_EXPIRED_MSG); return; }
         console.error('Reject error:', err);
         showErrorToast('حدث خطأ أثناء رفض الكتاب');
       }
@@ -494,19 +505,59 @@
       }
     }
 
-  // --- AUTH HELPER: kirim token sesi ke API server ---
-function authFetch(url, options) {
+// --- AUTH HELPER: kirim token sesi ke API server ---
+var SESSION_EXPIRED_MSG = 'انتهت الجلسة، يُرجَى تسجيل الدخول مرة أخرى';
+
+// Ambil token yang masih berlaku (cek kedaluwarsa di browser); null bila tidak ada / sudah habis
+function getValidAuthToken() {
   var token = localStorage.getItem('authToken');
+  if (!token) return null;
+  try {
+    var payload = JSON.parse(atob(token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/')));
+    if (payload.exp && payload.exp < Date.now()) {
+      localStorage.removeItem('authToken');
+      return null;
+    }
+  } catch (e) {
+    localStorage.removeItem('authToken');
+    return null;
+  }
+  return token;
+}
+
+function createSessionExpiredError() {
+  var err = new Error(SESSION_EXPIRED_MSG);
+  err.status = 401;
+  err.sessionExpired = true;
+  return err;
+}
+
+function isSessionExpiredError(err) {
+  return !!(err && err.sessionExpired);
+}
+
+async function authFetch(url, options) {
+  var token = getValidAuthToken();
+  // Tanpa token yang valid, jangan panggil API (hindari error 401 di console)
+  if (!token) throw createSessionExpiredError();
+
   var headers = Object.assign({ 'Content-Type': 'application/json' }, (options && options.headers) || {});
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-  return fetch(url, Object.assign({}, options, { headers: headers }));
+  headers['Authorization'] = 'Bearer ' + token;
+  var res = await fetch(url, Object.assign({}, options, { headers: headers }));
+
+  // Server menolak token (mis. rahasia berubah) -> anggap sesi habis
+  if (res.status === 401) {
+    localStorage.removeItem('authToken');
+    throw createSessionExpiredError();
+  }
+  return res;
 }
 
 // --- UPLOAD FILE KE CLOUDFLARE R2 (presigned URL), mengembalikan URL publik ---
 async function uploadFileToR2(file) {
   var res = await authFetch('/api/upload', {
     method: 'POST',
-    body: JSON.stringify({ filename: file.name, contentType: file.type })
+    body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size })
   });
   var data = await res.json();
   if (!res.ok) {
@@ -525,6 +576,7 @@ async function uploadFileToR2(file) {
   return data.publicUrl;
 }
 
+var MAX_UPLOAD_BYTES = 2 * 1024 * 1024; // batas maksimal 2 MB per file
 var isSubmittingBook = false;
 
   // --- SUBMIT HANDLER: upload ke R2, simpan hanya URL ke Supabase (pending_books) ---
@@ -543,18 +595,18 @@ var isSubmittingBook = false;
     return;
   }
 
-  if (!localStorage.getItem('authToken')) {
+  if (!getValidAuthToken()) {
     showErrorToast('انتهت الجلسة، يُرجَى تسجيل الدخول مرة أخرى');
     return;
   }
 
-  if (pdfFile.size > 25 * 1024 * 1024) {
-    showErrorToast('حجم ملف PDF يجب أن يكون أقل من 25 ميجابايت');
+  if (pdfFile.size > MAX_UPLOAD_BYTES) {
+    showErrorToast('حجم ملف PDF يجب ألا يتجاوز 2 ميجابايت');
     return;
   }
 
-  if (coverFile && coverFile.size > 5 * 1024 * 1024) {
-    showErrorToast('حجم صورة الغلاف يجب أن يكون أقل من 5 ميجابايت');
+  if (coverFile && coverFile.size > MAX_UPLOAD_BYTES) {
+    showErrorToast('حجم صورة الغلاف يجب ألا يتجاوز 2 ميجابايت');
     return;
   }
 
@@ -655,6 +707,7 @@ async function confirmDeleteBook() {
       showErrorToast('تم حذف الكتاب بنجاح من المكتبة العامة');
       loadApprovedBooks();
     } catch (err) {
+      if (isSessionExpiredError(err)) { closeDeleteBookModal(); showErrorToast(SESSION_EXPIRED_MSG); return; }
       console.error('Delete Error:', err);
       showErrorToast('حدث خطأ أثناء حذف الكتاب');
     }

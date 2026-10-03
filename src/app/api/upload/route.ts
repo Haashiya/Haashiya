@@ -11,16 +11,25 @@ const ALLOWED_TYPES: Record<string, string> = {
   "image/webp": "webp",
 };
 
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; // batas maksimal 2 MB per file
+
 export async function POST(req: NextRequest) {
   // Hanya user yang sudah login yang boleh meminta URL upload
   const auth = requireUser(req);
   if (!auth.ok) return auth.response;
 
   try {
-    const { filename, contentType } = await req.json();
+    const { filename, contentType, size } = await req.json();
 
     if (!filename || !contentType) {
       return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
+    }
+
+    if (!Number.isInteger(size) || size <= 0) {
+      return NextResponse.json({ error: "Missing file size" }, { status: 400 });
+    }
+    if (size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "Ukuran file maksimal 2 MB" }, { status: 413 });
     }
 
     const extension = ALLOWED_TYPES[contentType];
@@ -41,6 +50,7 @@ export async function POST(req: NextRequest) {
       Bucket: process.env.R2_BUCKET_NAME,
       Key: objectKey,
       ContentType: contentType,
+      ContentLength: size, // ditandatangani: R2 menolak bila ukuran upload berbeda
     });
 
     // Presigned URL berlaku 15 menit (900 detik)
