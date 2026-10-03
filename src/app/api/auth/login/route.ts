@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getServerSupabase } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { signSession } from '@/lib/auth';
 
@@ -13,10 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = getServerSupabase();
 
     // Query user by username (case-insensitive)
     const { data, error } = await supabase

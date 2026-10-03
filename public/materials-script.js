@@ -886,7 +886,7 @@ async function confirmDeleteBook() {
     setTimeout( async () => {
       await renderEducationalBooks();
       checkUserSession();
-      listenToApprovedBooks();
+      loadApprovedBooks();
       updateNotificationBadge();
       initSidebarEvents();
       setupDropZone('pdfDropZone', 'pdfInput', 'pdfDropText', ['application/pdf', '.pdf'], 'PDF');
