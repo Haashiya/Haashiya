@@ -438,7 +438,7 @@
       }
     }
   
-    function renderApprovedBooks(snapshot) {
+    function renderApprovedBooks(booksData) {
       var container = document.querySelector('.main-card-section:last-of-type .book-list-container');
       if (!container) return;
 
@@ -448,8 +448,7 @@
 
       document.querySelectorAll('.user-approved-card').forEach(el => el.remove());
 
-      snapshot.forEach((doc) => {
-        var book = doc.data();
+      booksData.forEach((book) => {
         var theme = book.category || book.theme || '';
         var coverImage = book.coverUrl || 'assets/images/covers/badee3tareekh.png';
         var card = document.createElement('div');
@@ -457,7 +456,7 @@
         card.setAttribute('data-category', 'general');
 
         var adminActions = isAdmin ? `
-          <button class="action-icon-btn admin-delete-btn" onclick="removeApprovedBook('${escapeHtml(doc.id)}')" title="حذف الكتاب">
+          <button class="action-icon-btn admin-delete-btn" onclick="removeApprovedBook('${escapeHtml(book.id)}')" title="حذف الكتاب">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -488,22 +487,25 @@
       });
     }
 
-    // Pembaruan otomatis (realtime) dari tabel approved_books di Supabase
-    function listenToApprovedBooks() {
-      db.collection('approved_books')
-        .orderBy('createdAt', 'desc')
-        .onSnapshot(renderApprovedBooks);
-    }
-
-    // Muat ulang manual (dipakai setelah approve / hapus)
+    // Muat ulang daftar buku yang disetujui dari Supabase
     async function loadApprovedBooks() {
       try {
-        var snapshot = await db.collection('approved_books').orderBy('createdAt', 'desc').get();
-        renderApprovedBooks(snapshot);
+        var res = await fetch('/api/books/approved');
+        var json = await res.json();
+        if (res.ok) {
+          renderApprovedBooks(json.data || []);
+        } else {
+          console.error('Failed to load approved books:', json.error);
+        }
       } catch (err) {
         console.error('Load approved books error:', err);
       }
     }
+
+    // Panggil saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+      loadApprovedBooks();
+    });
 
 // --- AUTH HELPER: kirim token sesi ke API server ---
 var SESSION_EXPIRED_MSG = 'انتهت الجلسة، يُرجَى تسجيل الدخول مرة أخرى';
