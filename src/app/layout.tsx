@@ -3,10 +3,10 @@ import { Work_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 
 const workSans = Work_Sans({ subsets: ["latin"], variable: "--font-primary" });
-const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({ 
+const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
   weight: ['400', '600', '700'],
-  subsets: ["arabic"], 
-  variable: "--font-arabic" 
+  subsets: ["arabic"],
+  variable: "--font-arabic"
 });
 
 export const viewport: Viewport = {
@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "حاشية (Haashiya) - بوابتنا لتعلم اللغة العربية",
+  title: "حاشية  - بوابتنا لتعلم اللغة العربية",
   description: "بوابتنا لتعلم اللغة العربية",
 };
 
