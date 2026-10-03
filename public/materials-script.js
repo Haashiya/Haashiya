@@ -13,11 +13,11 @@
   
     async function loadBooksData() {
       try {
-        var response = await fetch('data/books.json');
-        if (!response.ok) throw new Error('Failed to fetch books.json');
+        var response = await fetch('/api/books/educational');
+        if (!response.ok) throw new Error('Failed to fetch educational books API');
         return await response.json();
       } catch (error) {
-        console.error('Error loading books JSON data:', error);
+        console.error('Error loading educational books data:', error);
         return [];
       }
     }
