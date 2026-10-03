@@ -445,10 +445,11 @@ function handleModalBackdropClick(event) {
 // --- OTHER DATA FETCHING ---
 async function loadArchiveData() {
   try {
-    var res = await fetch('data/archive.json');
+    var res = await fetch('/api/archive');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     return await res.json();
   } catch (err) {
-    console.error('Error fetching archive.json:', err);
+    console.error('Error fetching archive data:', err);
     return { assignments: [], whiteboards: [], photos: [] };
   }
 }
