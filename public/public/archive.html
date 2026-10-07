@@ -636,9 +636,11 @@
     async function loadArchiveData() {
       try {
         const res = await fetch('data/archive.json');
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+          return { assignments: [], whiteboards: [], photos: [] };
+        }
         return await res.json();
       } catch (err) {
-        console.error('Error fetching archive.json:', err);
         return { assignments: [], whiteboards: [], photos: [] };
       }
     }

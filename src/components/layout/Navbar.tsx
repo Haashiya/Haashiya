@@ -378,11 +378,12 @@ export default function Navbar() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '10px', paddingBottom: '16px', paddingLeft: '20px', paddingRight: '20px' }}>
 
           {/* Menu Utama: الرئيسية */}
-          <a 
-            href="#" 
+          <Link 
+            href="/" 
+            onClick={() => setIsSidebarOpen(false)}
             style={{
               textDecoration: 'none',
-              color: '#000000', // Warna hitam (sama seperti menu di bawahnya saat belum dipencet)
+              color: pathname === '/' ? '#888888' : '#000000', // Abu-abu jika sedang di beranda
               fontSize: '17px',
               fontFamily: 'var(--font-arabic)',
               fontWeight: 600,
@@ -392,7 +393,7 @@ export default function Navbar() {
             }}
           >
             الرئيسية
-          </a>
+          </Link>
 
           {/* Menu dengan dropdown: معرض الأرشيف */}
           <div style={{ marginBottom: '2px' }}>

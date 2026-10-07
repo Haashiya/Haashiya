@@ -31,10 +31,15 @@ export default function EducationalMaterials() {
   const [books, setBooks] = useState<Book[]>([]);
 
   useEffect(() => {
-    fetch('/data/books.json')
-      .then((res) => res.json())
+    fetch('/api/books/educational')
+      .then((res) => {
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+          return [];
+        }
+        return res.json();
+      })
       .then((data) => setBooks(data))
-      .catch((err) => console.error('Error loading books:', err));
+      .catch(() => setBooks([]));
   }, []);
 
   const filteredBooks = books.filter((book) => book.category === activeCategory);
