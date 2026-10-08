@@ -5,9 +5,9 @@ import './talim.css';
 
 export default function TalimAIWorkspace() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [userData, setUserData] = useState<{name: string, role: string, avatar: string, gender?: string} | null>(null);
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  const [showArtifacts, setShowArtifacts] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [activeChat, setActiveChat] = useState<{title: string, type: 'book' | 'history'} | null>(null);
   
@@ -176,6 +176,12 @@ export default function TalimAIWorkspace() {
     return () => window.removeEventListener('click', handleClickOutside);
   }, [historyMenuOpen, activePromptCategory]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
+
   const handleInput = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -183,8 +189,20 @@ export default function TalimAIWorkspace() {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setAttachedBooks(prev => [...prev, {
+        id: `file-${Date.now()}`,
+        title: file.name,
+        coverUrl: null
+      }]);
+    }
+  };
+
   return (
     <div className="talim-container" dir="rtl">
+      <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
       
       {/* Sidebar Backdrop Overlay */}
       {isSidebarOpen && (
@@ -687,19 +705,18 @@ export default function TalimAIWorkspace() {
             )}
           </div>
 
-          {/* Artifacts Toggle */}
           <button 
-            className={`nav-item ${showArtifacts ? 'active' : ''}`}
-            onClick={() => setShowArtifacts(!showArtifacts)}
-            style={{ width: '100%', border: 'none', background: showArtifacts ? 'rgba(36, 113, 234, 0.1)' : 'transparent', textAlign: 'right' }}
+            className="nav-item"
+            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/'}
+            style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'right', display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}
           >
             <svg className="icon-default" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>
+              <path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v.5"/>
             </svg>
             <svg className="icon-hover" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"></path>
+              <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
             </svg>
-            الملاحظات (Artifacts)
+            العودة للسابق
           </button>
         </div>
 
@@ -772,7 +789,7 @@ export default function TalimAIWorkspace() {
 
       {/* Main Area & Split Screen Layout */}
       <div style={{ display: 'flex', flex: 1, width: '100%', overflow: 'hidden' }}>
-        <main className="main-workspace" style={{ borderLeft: showArtifacts ? '1px solid #E5E9EC' : 'none', backgroundImage: activeChat ? 'none' : 'url("/images/hero_bg.png")', backgroundColor: activeChat ? '#ffffff' : 'var(--color-surface)' }}>
+        <main className="main-workspace" style={{ borderLeft: 'none', backgroundImage: activeChat ? 'none' : 'url("/images/hero_bg.png")', backgroundColor: activeChat ? '#ffffff' : 'var(--color-surface)' }}>
           <header className="top-bar">
             <div className="plan-badge">
               باقة الطالب · <a href="#">ترقية</a>
@@ -898,7 +915,7 @@ export default function TalimAIWorkspace() {
                   
                   <div className="input-toolbar">
                     <div className="toolbar-right">
-                      <button className="icon-btn" title="إرفاق كتاب أو نص">
+                      <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                       </button>
                     </div>
@@ -962,7 +979,7 @@ export default function TalimAIWorkspace() {
                 
                 <div className="input-toolbar">
                   <div className="toolbar-right">
-                    <button className="icon-btn" title="إرفاق كتاب أو نص">
+                    <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1009,43 +1026,7 @@ export default function TalimAIWorkspace() {
           )}
         </main>
 
-        {/* Artifacts Split Screen Panel */}
-        {showArtifacts && (
-          <aside style={{
-            width: '50%',
-            backgroundColor: '#ffffff',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '24px',
-            overflowY: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: '#111827' }}>جدول إعراب الفاتحة</h2>
-              <button 
-                onClick={() => setShowArtifacts(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: '4px' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-            
-            <div style={{
-              flex: 1,
-              border: '1px solid #E5E9EC',
-              borderRadius: '8px',
-              backgroundColor: '#f8fafc',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#6B7280',
-              padding: '24px',
-              textAlign: 'center'
-            }}>
-              {/* Placeholder for actual Artifact content */}
-              <p>تخيل هنا جدول تفصيلي أو مخطط تم إنشاؤه بواسطة الذكاء الاصطناعي</p>
-            </div>
-          </aside>
-        )}
+
       </div>
 
       {/* Books Selection Modal */}

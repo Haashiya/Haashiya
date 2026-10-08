@@ -577,14 +577,8 @@ export default function Navbar() {
           </Link>
           
           <Link 
-            href="#coming-soon" 
-            onClick={(e) => {
-              e.preventDefault();
-              if (typeof window !== 'undefined' && (window as any).showGlobalToast) {
-                (window as any).showGlobalToast('قريباً! هذه الصفحة قيد التطوير.');
-              }
-              setIsSidebarOpen(false);
-            }}
+            href="/talim-ai" 
+            onClick={() => setIsSidebarOpen(false)}
             style={{
               textDecoration: 'none',
               color: '#000000',
