@@ -26,7 +26,7 @@ export default function Home() {
             <ServiceCard title="معرض الأرشيف" href="/archive" image="/images/card_galeriarsip.png" />
             <ServiceCard title="المكتبة الرقمية" href="/materials" image="/images/card_perpustakaandigital.png" />
             <ServiceCard title="المواد التعليمية" href="/materials#educational-materials" image="/images/card_bahanajar.png" />
-            <ServiceCard title="التعلم المدعوم بالذكاء الاصطناعي" href="#coming-soon" image="/images/card_ailearning.png" />
+            <ServiceCard title="التعلم المدعوم بالذكاء الاصطناعي" href="/talim-ai" image="/images/card_ailearning.png" />
           </div>
         </section>
 
