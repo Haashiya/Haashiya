@@ -11,7 +11,7 @@ export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Buka dropdown sesuai dengan halaman saat ini
   const [isArchiveOpen, setIsArchiveOpen] = useState(pathname === '/archive');
-  const [isLibraryOpen, setIsLibraryOpen] = useState(pathname === '/library'); 
+  const [isLibraryOpen, setIsLibraryOpen] = useState(pathname === '/materials'); 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userData, setUserData] = useState<{name: string, role: string, avatar: string, gender?: string} | null>(null);
@@ -21,7 +21,7 @@ export default function Navbar() {
     if (pathname === '/archive') {
       setIsArchiveOpen(true);
       setIsLibraryOpen(false);
-    } else if (pathname === '/library') {
+    } else if (pathname === '/materials') {
       setIsArchiveOpen(false);
       setIsLibraryOpen(true);
     } else {
@@ -532,8 +532,15 @@ export default function Navbar() {
           </div>
 
           {/* 3 Menu Tambahan Baru */}
-          <a 
-            href="#" 
+          <Link 
+            href="#coming-soon" 
+            onClick={(e) => {
+              e.preventDefault();
+              if (typeof window !== 'undefined' && (window as any).showGlobalToast) {
+                (window as any).showGlobalToast('قريباً! هذه الصفحة قيد التطوير.');
+              }
+              setIsSidebarOpen(false);
+            }}
             style={{
               textDecoration: 'none',
               color: '#000000',
@@ -545,10 +552,17 @@ export default function Navbar() {
             }}
           >
             معجم المصطلحات
-          </a>
+          </Link>
           
-          <a 
-            href="#" 
+          <Link 
+            href="#coming-soon" 
+            onClick={(e) => {
+              e.preventDefault();
+              if (typeof window !== 'undefined' && (window as any).showGlobalToast) {
+                (window as any).showGlobalToast('قريباً! هذه الصفحة قيد التطوير.');
+              }
+              setIsSidebarOpen(false);
+            }}
             style={{
               textDecoration: 'none',
               color: '#000000',
@@ -560,10 +574,17 @@ export default function Navbar() {
             }}
           >
             التقويم الأكاديمي
-          </a>
+          </Link>
           
-          <a 
-            href="#" 
+          <Link 
+            href="#coming-soon" 
+            onClick={(e) => {
+              e.preventDefault();
+              if (typeof window !== 'undefined' && (window as any).showGlobalToast) {
+                (window as any).showGlobalToast('قريباً! هذه الصفحة قيد التطوير.');
+              }
+              setIsSidebarOpen(false);
+            }}
             style={{
               textDecoration: 'none',
               color: '#000000',
@@ -575,8 +596,7 @@ export default function Navbar() {
             }}
           >
             التعلم المدعوم بالذكاء الاصطناعي
-          </a>
-
+          </Link>
         </div>
       </div>
     </>

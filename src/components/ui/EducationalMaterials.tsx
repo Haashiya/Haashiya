@@ -29,6 +29,7 @@ const toAbsolute = (url: string) => (url.startsWith('/') || url.startsWith('http
 export default function EducationalMaterials() {
   const [activeCategory, setActiveCategory] = useState('balagha');
   const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/books/educational')
@@ -38,8 +39,14 @@ export default function EducationalMaterials() {
         }
         return res.json();
       })
-      .then((data) => setBooks(data))
-      .catch(() => setBooks([]));
+      .then((data) => {
+        setBooks(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setBooks([]);
+        setLoading(false);
+      });
   }, []);
 
   const filteredBooks = books.filter((book) => book.category === activeCategory);
@@ -55,6 +62,17 @@ export default function EducationalMaterials() {
       }}
     >
       <link rel="stylesheet" href="/dashboard.css" />
+      <style>{`
+        @keyframes pulseSkeleton {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        .skeleton-box {
+          background-color: #cbd5e1;
+          border-radius: 4px;
+          animation: pulseSkeleton 1.5s ease-in-out infinite;
+        }
+      `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingRight: '10px' }}>
         <h2 className="text-h2" style={{ fontSize: 'clamp(20px, 6vw, 25px)', color: 'var(--color-ink)', margin: 0 }}>المواد التعليمية</h2>
@@ -77,7 +95,20 @@ export default function EducationalMaterials() {
         </div>
 
         <div className="book-list-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {filteredBooks.length > 0 ? (
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="book-row-card">
+                <div className="book-row-right" style={{ width: '100%' }}>
+                  <div className="skeleton-box" style={{ width: '56px', height: '80px', flexShrink: 0 }} />
+                  <div className="book-row-details" style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, paddingRight: '12px' }}>
+                    <div className="skeleton-box" style={{ height: '16px', width: '70%' }} />
+                    <div className="skeleton-box" style={{ height: '12px', width: '40%' }} />
+                    <div className="skeleton-box" style={{ height: '10px', width: '50%' }} />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : filteredBooks.length > 0 ? (
             filteredBooks.map((book) => (
               <div key={book.id} className="book-row-card">
                 <div className="book-row-right">

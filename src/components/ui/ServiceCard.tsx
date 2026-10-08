@@ -1,3 +1,4 @@
+"use client";
 import Link from 'next/link';
 
 interface ServiceCardProps {
@@ -7,8 +8,17 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({ title, href, image = '/images/footer_bg.png' }: ServiceCardProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (href === '#coming-soon') {
+      e.preventDefault();
+      if (typeof window !== 'undefined' && (window as any).showGlobalToast) {
+        (window as any).showGlobalToast('قريباً! هذه الصفحة قيد التطوير.');
+      }
+    }
+  };
+
   return (
-    <Link href={href} style={{
+    <Link href={href} onClick={handleClick} style={{
       display: 'flex',
       flexDirection: 'column',
       borderRadius: '8px',

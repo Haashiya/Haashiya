@@ -348,7 +348,30 @@ async function loadSubjectRecordings(subjectKey) {
 
   if (!container) return;
 
-  container.innerHTML = `<p style="text-align: center; color: #64748b; grid-column: 1/-1;">جاري تحميل التسجيلات...</p>`;
+  container.innerHTML = `
+    <!-- SKELETON LOADER -->
+    <div class="recording-card" style="opacity: 0.7; pointer-events: none;">
+      <div class="recording-thumb-wrapper skeleton-box" style="width: 100%; aspect-ratio: 16/9; background-color: #cbd5e1;"></div>
+      <div class="recording-details" style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+        <div class="skeleton-box" style="height: 16px; width: 80%;"></div>
+        <div class="skeleton-box" style="height: 12px; width: 60%;"></div>
+      </div>
+    </div>
+    <div class="recording-card" style="opacity: 0.7; pointer-events: none;">
+      <div class="recording-thumb-wrapper skeleton-box" style="width: 100%; aspect-ratio: 16/9; background-color: #cbd5e1;"></div>
+      <div class="recording-details" style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+        <div class="skeleton-box" style="height: 16px; width: 80%;"></div>
+        <div class="skeleton-box" style="height: 12px; width: 60%;"></div>
+      </div>
+    </div>
+    <div class="recording-card" style="opacity: 0.7; pointer-events: none;">
+      <div class="recording-thumb-wrapper skeleton-box" style="width: 100%; aspect-ratio: 16/9; background-color: #cbd5e1;"></div>
+      <div class="recording-details" style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+        <div class="skeleton-box" style="height: 16px; width: 80%;"></div>
+        <div class="skeleton-box" style="height: 12px; width: 60%;"></div>
+      </div>
+    </div>
+  `;
 
   var playlistId = PLAYLIST_MAP[subjectKey];
   currentSubjectVideos = await fetchPlaylistVideos(playlistId);

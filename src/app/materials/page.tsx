@@ -10,8 +10,17 @@ export default function Page() {
       <Navbar />
       <link rel="stylesheet" href="/dashboard.css" />
       <div dangerouslySetInnerHTML={{ __html: `
-  
-  
+  <style>
+    @keyframes pulseSkeleton {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .skeleton-box {
+      background-color: #cbd5e1;
+      border-radius: 4px;
+      animation: pulseSkeleton 1.5s ease-in-out infinite;
+    }
+  </style>
 
    
 
@@ -70,7 +79,37 @@ export default function Page() {
   
       <!-- Horizontal Book List Container -->
       <div id="educationalBooksContainer" class="book-list-container">
-        
+        <!-- SKELETON LOADER -->
+        <div class="book-row-card" style="opacity: 0.7;">
+          <div class="book-row-right" style="width: 100%;">
+            <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+            <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+              <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+              <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+              <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="book-row-card" style="opacity: 0.7;">
+          <div class="book-row-right" style="width: 100%;">
+            <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+            <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+              <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+              <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+              <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="book-row-card" style="opacity: 0.7;">
+          <div class="book-row-right" style="width: 100%;">
+            <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+            <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+              <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+              <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+              <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   
@@ -99,7 +138,37 @@ export default function Page() {
   </div>
 
   <div class="book-list-container">
-    <!-- General library row items go here -->
+    <!-- SKELETON LOADER -->
+    <div class="book-row-card" style="opacity: 0.7;">
+      <div class="book-row-right" style="width: 100%;">
+        <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+        <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+          <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+          <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+          <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="book-row-card" style="opacity: 0.7;">
+      <div class="book-row-right" style="width: 100%;">
+        <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+        <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+          <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+          <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+          <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="book-row-card" style="opacity: 0.7;">
+      <div class="book-row-right" style="width: 100%;">
+        <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+        <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+          <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+          <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+          <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 

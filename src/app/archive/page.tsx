@@ -21,8 +21,17 @@ export default function Page() {
       <link rel="stylesheet" href="/dashboard.css" />
       <link rel="stylesheet" href="/archive.css" />
       <div dangerouslySetInnerHTML={{ __html: `
-  
-
+  <style>
+    @keyframes pulseSkeleton {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .skeleton-box {
+      background-color: #cbd5e1;
+      border-radius: 4px;
+      animation: pulseSkeleton 1.5s ease-in-out infinite;
+    }
+  </style>
   <!-- SIDEBAR OVERLAY -->
   
 
@@ -66,7 +75,30 @@ export default function Page() {
       </div>
 
       <!-- Dynamic YouTube Grid Container -->
-      <div id="recordingsContainer" class="recordings-grid"></div>
+      <div id="recordingsContainer" class="recordings-grid">
+        <!-- SKELETON LOADER -->
+        <div class="recording-card" style="opacity: 0.7; pointer-events: none;">
+          <div class="recording-thumb-wrapper skeleton-box" style="width: 100%; aspect-ratio: 16/9; background-color: #cbd5e1;"></div>
+          <div class="recording-details" style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+            <div class="skeleton-box" style="height: 16px; width: 80%;"></div>
+            <div class="skeleton-box" style="height: 12px; width: 60%;"></div>
+          </div>
+        </div>
+        <div class="recording-card" style="opacity: 0.7; pointer-events: none;">
+          <div class="recording-thumb-wrapper skeleton-box" style="width: 100%; aspect-ratio: 16/9; background-color: #cbd5e1;"></div>
+          <div class="recording-details" style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+            <div class="skeleton-box" style="height: 16px; width: 80%;"></div>
+            <div class="skeleton-box" style="height: 12px; width: 60%;"></div>
+          </div>
+        </div>
+        <div class="recording-card" style="opacity: 0.7; pointer-events: none;">
+          <div class="recording-thumb-wrapper skeleton-box" style="width: 100%; aspect-ratio: 16/9; background-color: #cbd5e1;"></div>
+          <div class="recording-details" style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+            <div class="skeleton-box" style="height: 16px; width: 80%;"></div>
+            <div class="skeleton-box" style="height: 12px; width: 60%;"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 2. ASSIGNMENTS SECTION -->
@@ -94,7 +126,29 @@ export default function Page() {
         
       </div>
 
-      <div id="assignmentsContainer" class="book-list-container"></div>
+      <div id="assignmentsContainer" class="book-list-container">
+        <!-- SKELETON LOADER -->
+        <div class="book-row-card" style="opacity: 0.7;">
+          <div class="book-row-right" style="width: 100%;">
+            <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+            <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+              <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+              <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+              <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="book-row-card" style="opacity: 0.7;">
+          <div class="book-row-right" style="width: 100%;">
+            <div class="skeleton-box" style="width: 56px; height: 80px; flex-shrink: 0;"></div>
+            <div class="book-row-details" style="display: flex; flex-direction: column; gap: 8px; flex: 1; padding-right: 12px;">
+              <div class="skeleton-box" style="height: 16px; width: 70%;"></div>
+              <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
+              <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 3. WHITEBOARDS SECTION -->
@@ -122,7 +176,23 @@ export default function Page() {
         
       </div>
 
-      <div id="whiteboardsContainer" class="gallery-grid"></div>
+      <div id="whiteboardsContainer" class="gallery-grid">
+        <!-- SKELETON LOADER -->
+        <div class="photo-card" style="opacity: 0.7;">
+          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
+          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
+            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
+          </div>
+        </div>
+        <div class="photo-card" style="opacity: 0.7;">
+          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
+          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
+            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 4. OTHER PHOTOS SECTION -->
@@ -150,8 +220,23 @@ export default function Page() {
         
       </div>
 
-      <div id="photosContainer" class="gallery-grid"></div>
-    </section>
+      <div id="photosContainer" class="gallery-grid">
+        <!-- SKELETON LOADER -->
+        <div class="photo-card" style="opacity: 0.7;">
+          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
+          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
+            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
+          </div>
+        </div>
+        <div class="photo-card" style="opacity: 0.7;">
+          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
+          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
+            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
+          </div>
+        </div>
+      </div>
   </main>
 
   

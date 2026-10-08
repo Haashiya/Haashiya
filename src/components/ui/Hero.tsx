@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Hero() {
   return (
     <section style={{
@@ -11,7 +13,7 @@ export default function Hero() {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
-      alignItems: 'flex-start' /* RTL flex-start is visual right */
+      alignItems: 'flex-start'
     }}>
       <div style={{ transform: 'translateY(-5.2cqi)' }}>
         <h1 className="text-h1" style={{ color: 'var(--color-white-text)', textAlign: 'right', fontSize: '7.29cqi', padding: '0.83cqi 0px 0.83cqi 0px' }}>
@@ -21,24 +23,29 @@ export default function Hero() {
           الانخراط في أجواء التعلم في أي وقت ومكان
         </p>
       </div>
-      <button className="text-button" style={{
-        marginTop: '0.41cqi',
-        marginRight: '-0.62cqi',
-        backgroundColor: 'var(--color-surface)',
-        color: 'var(--color-primary-600)',
-        borderRadius: '1.66cqi',
-        padding: '1.75cqi 1.75cqi', // Ditambah sekitar ~0.3cqi (sekitar 1px per sisi di layar mobile)
-        fontSize: '3.125cqi',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1.25cqi',
-      }}>
-        <span>ادرس الآن</span>
-        <svg width="2.7cqi" height="2.7cqi" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square">
-          <path d="M19 12H5"></path>
-          <path d="M11 19l-7-7 7-7"></path>
-        </svg>
-      </button>
+      <Link href="/materials" style={{ textDecoration: 'none' }}>
+        <button className="text-button" style={{
+          marginTop: '0.41cqi',
+          marginRight: '-0.62cqi',
+          backgroundColor: 'var(--color-surface)',
+          color: 'var(--color-primary-600)',
+          borderRadius: '1.66cqi',
+          padding: '1.75cqi 1.75cqi',
+          fontSize: '3.125cqi',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.25cqi',
+          cursor: 'pointer',
+          border: 'none'
+        }}>
+          <span>ادرس الآن</span>
+          <svg width="2.7cqi" height="2.7cqi" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square">
+            <path d="M19 12H5"></path>
+            <path d="M11 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+      </Link>
     </section>
   );
 }
+

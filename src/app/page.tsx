@@ -23,10 +23,10 @@ export default function Home() {
             gridTemplateColumns: '1fr 1fr',
             gap: '10px'
           }}>
-            <ServiceCard title="معرض الأرشيف" href="#" image="/images/card_galeriarsip.png" />
-            <ServiceCard title="المكتبة الرقمية" href="#" image="/images/card_perpustakaandigital.png" />
-            <ServiceCard title="المواد التعليمية" href="#" image="/images/card_bahanajar.png" />
-            <ServiceCard title="التعلم المدعوم بالذكاء الاصطناعي" href="#" image="/images/card_ailearning.png" />
+            <ServiceCard title="معرض الأرشيف" href="/archive" image="/images/card_galeriarsip.png" />
+            <ServiceCard title="المكتبة الرقمية" href="/materials" image="/images/card_perpustakaandigital.png" />
+            <ServiceCard title="المواد التعليمية" href="/materials#educational-materials" image="/images/card_bahanajar.png" />
+            <ServiceCard title="التعلم المدعوم بالذكاء الاصطناعي" href="#coming-soon" image="/images/card_ailearning.png" />
           </div>
         </section>
 
@@ -44,24 +44,7 @@ export default function Home() {
 
           <div className="main-card-section" style={{ marginBottom: 0 }}>
             <div className="book-list-container">
-              <div className="book-row-card">
-                <div className="book-row-right">
-                  <img src="/assets/images/covers/nahwu_wadeeh_1.png" alt="النحو الواضح" className="book-row-cover" />
-                  <div className="book-row-details">
-                    <h3 className="book-row-title">النحو الواضح في قواعد اللغة العربية</h3>
-                    <p className="book-row-author">علي الجارم ومصطفى أمين</p>
-                    <span className="book-row-meta">المكتبة العامة - الفن: علم النحو</span>
-                  </div>
-                </div>
-                <div className="book-row-actions">
-                  <a href="/assets/pdfs/badee3tareekh.pdf" target="_blank" rel="noreferrer" className="action-icon-btn" title="قراءة">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  </a>
-                  <a href="/assets/pdfs/badee3tareekh.pdf" download className="action-icon-btn" title="تحميل">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  </a>
-                </div>
-              </div>
+              <div style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>لا توجد كتب في هذا القسم حالياً</div>
             </div>
           </div>
         </section>

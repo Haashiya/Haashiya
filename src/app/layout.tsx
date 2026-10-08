@@ -160,10 +160,46 @@ export default function RootLayout({
               }
             };
             initSupabase();
+
+            window.showGlobalToast = function(message) {
+              const existing = document.getElementById('global-toast');
+              if (existing) existing.remove();
+              
+              const toast = document.createElement('div');
+              toast.id = 'global-toast';
+              toast.textContent = message;
+              Object.assign(toast.style, {
+                position: 'fixed',
+                bottom: '30px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: '#1e293b',
+                color: '#fff',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                zIndex: '99999',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                opacity: '0',
+                transition: 'opacity 0.3s ease'
+              });
+              document.body.appendChild(toast);
+              
+              void toast.offsetWidth;
+              toast.style.opacity = '1';
+              
+              setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+              }, 3000);
+            };
           `}
         </Script>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+      </body>
     </html>
   );
 }
