@@ -67,7 +67,7 @@
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    background-color: #f1f5f9;
+    background-color: #cbd5e1;
     overflow: hidden;
   }
   
@@ -228,6 +228,7 @@
     object-fit: cover;
     border-radius: 10px;
     cursor: pointer;
+    background-color: #cbd5e1;
   }
   
   .photo-date {
