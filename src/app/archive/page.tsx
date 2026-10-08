@@ -101,7 +101,51 @@ export default function Page() {
       </div>
     </section>
 
-    <!-- 2. ASSIGNMENTS SECTION -->
+    <!-- 2. WHITEBOARDS SECTION -->
+    <section id="whiteboards" class="main-card-section">
+      <div class="section-header">
+        <h2 class="section-title">السبورات</h2>
+        <a href="#" class="view-all-link">&rarr; عرض الكل</a>
+      </div>
+
+      <div class="archive-filter-bar">
+        <select class="level-select">
+          <option value="1">المستوى الأول</option>
+          <option value="2">المستوى الثاني</option>
+        </select>
+        <div class="category-buttons" style="margin-bottom: 0;">
+          <button class="cat-btn active" onclick="switchSubject('whiteboards', 'balagha', this)">البلاغة</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'qiraah', this)">القراءة</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'tawheed', this)">التوحيد</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'kitaba', this)">الكتابة</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'nahw', this)">النحو</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'adab', this)">تاريخ الأدب</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'indonesian', this)">اللغة الإندونيسية</button>
+          <button class="cat-btn" onclick="switchSubject('whiteboards', 'pkn', this)">التربية الوطنية</button>
+        </div>
+        
+      </div>
+
+      <div id="whiteboardsContainer" class="gallery-grid">
+        <!-- SKELETON LOADER -->
+        <div class="photo-card" style="opacity: 0.7;">
+          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
+          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
+            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
+          </div>
+        </div>
+        <div class="photo-card" style="opacity: 0.7;">
+          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
+          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
+            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. ASSIGNMENTS SECTION -->
     <section id="assignments" class="main-card-section">
       <div class="section-header">
         <h2 class="section-title">الواجبات</h2>
@@ -146,50 +190,6 @@ export default function Page() {
               <div class="skeleton-box" style="height: 12px; width: 40%;"></div>
               <div class="skeleton-box" style="height: 10px; width: 50%;"></div>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. WHITEBOARDS SECTION -->
-    <section id="whiteboards" class="main-card-section">
-      <div class="section-header">
-        <h2 class="section-title">السبورات</h2>
-        <a href="#" class="view-all-link">&rarr; عرض الكل</a>
-      </div>
-
-      <div class="archive-filter-bar">
-        <select class="level-select">
-          <option value="1">المستوى الأول</option>
-          <option value="2">المستوى الثاني</option>
-        </select>
-        <div class="category-buttons" style="margin-bottom: 0;">
-          <button class="cat-btn active" onclick="switchSubject('whiteboards', 'balagha', this)">البلاغة</button>
-          <button class="cat-btn" onclick="switchSubject('whiteboards', 'qiraah', this)">القراءة</button>
-          <button class="cat-btn" onclick="switchSubject('whiteboards', 'tawheed', this)">التوحيد</button>
-          <button class="cat-btn" onclick="switchSubject('whiteboards', 'kitaba', this)">الكتابة</button>
-          <button class="cat-btn" onclick="switchSubject('whiteboards', 'nahw', this)">النحو</button>
-          <button class="cat-btn" onclick="switchSubject('whiteboards', 'adab', this)">تاريخ الأدب</button>
-          <button class="cat-btn" onclick="switchSubject('whiteboards', 'indonesian', this)">اللغة الإندونيسية</button>
-          <button class="cat-btn" onclick="switchSubject('whiteboards', 'pkn', this)">التربية الوطنية</button>
-        </div>
-        
-      </div>
-
-      <div id="whiteboardsContainer" class="gallery-grid">
-        <!-- SKELETON LOADER -->
-        <div class="photo-card" style="opacity: 0.7;">
-          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
-          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
-            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
-          </div>
-        </div>
-        <div class="photo-card" style="opacity: 0.7;">
-          <div class="skeleton-box" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px;"></div>
-          <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-            <div class="skeleton-box" style="height: 12px; width: 50%;"></div>
-            <div class="skeleton-box" style="height: 10px; width: 80%;"></div>
           </div>
         </div>
       </div>
