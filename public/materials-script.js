@@ -347,6 +347,24 @@
       var container = document.getElementById('pendingBooksList');
       if (!container) return;
 
+      // Show Skeleton Loading
+      container.innerHTML = Array(3).fill(`
+        <div class="pending-item-card" style="opacity: 0.7; pointer-events: none; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="pending-item-left" style="flex: 1; display: flex; align-items: center; gap: 12px;">
+            <div class="skeleton-box" style="width: 48px; height: 68px; flex-shrink: 0; border-radius: 6px;"></div>
+            <div class="pending-book-info" style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+              <div class="skeleton-box" style="height: 16px; width: 60%; border-radius: 4px;"></div>
+              <div class="skeleton-box" style="height: 12px; width: 80%; border-radius: 4px;"></div>
+            </div>
+          </div>
+          <div class="pending-action-btns" style="display: flex; gap: 8px; align-items: center;">
+            <div class="skeleton-box" style="width: 36px; height: 36px; border-radius: 50%;"></div>
+            <div class="skeleton-box" style="width: 65px; height: 36px; border-radius: 6px;"></div>
+            <div class="skeleton-box" style="width: 65px; height: 36px; border-radius: 6px;"></div>
+          </div>
+        </div>
+      `).join('');
+
       try {
         var pendingBooks = await fetchPendingBooks();
         container.innerHTML = '';
@@ -446,7 +464,8 @@
       var user = sessionData ? JSON.parse(sessionData) : null;
       var isAdmin = user && user.role === 'admin';
 
-      document.querySelectorAll('.user-approved-card').forEach(el => el.remove());
+      // Bersihkan skeleton loading atau isi sebelumnya
+      container.innerHTML = '';
 
       booksData.forEach((book) => {
         var theme = book.category || book.theme || '';
