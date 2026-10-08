@@ -146,19 +146,21 @@
 }
 
 .accordion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 0.85rem;
   color: #4B5563;
   cursor: pointer;
   transition: all 0.2s;
-  background-color: #f8fafc;
-  border: 1px solid #E5E9EC;
+  background-color: transparent;
+  border: none;
 }
 
 .accordion-item:hover {
-  background-color: #f1f5f9;
-  border-color: #CBD5E1;
+  background-color: rgba(0,0,0,0.04);
   color: #111827;
 }
 
@@ -202,7 +204,7 @@
   background-color: var(--color-surface);
   background-image: url('/images/hero_bg.png');
   background-size: cover;
-  background-position: center;
+  background-position: left center;
   background-repeat: no-repeat;
 }
 
@@ -372,4 +374,127 @@
 
 .prompt-chip-claude svg {
   color: var(--color-stone);
+}
+
+/* Modern History Items */
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #4B5563;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.history-item:hover {
+  background-color: #E5E9EC;
+  color: #111827;
+}
+
+.history-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.history-item-icon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1.5px solid #9CA3AF;
+  flex-shrink: 0;
+}
+
+.history-item-text {
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-actions {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.history-item-actions:hover {
+  background-color: rgba(0,0,0,0.05);
+  color: #111827;
+}
+
+.history-item:hover .history-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .history-item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.history-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: auto;
+  z-index: 100;
+  background-color: #1F2023;
+  border: 1px solid #33363A;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  width: 175px;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+}
+
+.history-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  color: #E8EAED;
+  font-size: 0.88rem;
+  font-family: var(--font-arabic, sans-serif);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  direction: rtl;
+}
+
+.history-dropdown-item:hover {
+  background-color: #2D2E31;
+}
+
+.history-dropdown-item.danger {
+  color: #F87171;
+}
+
+.history-dropdown-item.danger:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+/* Hide scrollbars visually while maintaining scroll functionality */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
