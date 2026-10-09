@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import { useChat } from '@ai-sdk/react';
 import './talim.css';
 
 export default function TalimAIWorkspace() {
@@ -38,8 +39,23 @@ export default function TalimAIWorkspace() {
 
   const [editingItem, setEditingItem] = useState<{ id: string, type: 'rename' | 'project' | 'group', currentValue: string } | null>(null);
   const [modalInputValue, setModalInputValue] = useState('');
-  const [inputText, setInputText] = useState('');
-  const [currentMessage, setCurrentMessage] = useState('ما هي شروط صحة الصلاة في هذا الباب؟');
+  
+  const { messages, sendMessage, status, stop } = useChat();
+  const isLoading = status === 'submitted' || status === 'streaming';
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const getMessageContent = (m: any) => {
+    if (typeof m.content === 'string' && m.content) return m.content;
+    if (Array.isArray(m.parts)) {
+      return m.parts.map((p: any) => (p.type === 'text' ? p.text : '')).join('');
+    }
+    return '';
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const togglePin = (id: string) => {
     setHistoryList(prev => prev.map(item => {
@@ -184,33 +200,36 @@ export default function TalimAIWorkspace() {
     }
   }, []);
 
-  const handleInput = () => {
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-      setInputText(textareaRef.current.value);
     }
   };
 
-  const handleSend = () => {
-    const text = inputText.trim();
-    if (text) {
-      setCurrentMessage(text);
-      if (!activeChat) {
-        setActiveChat({ title: text.substring(0, 30) + (text.length > 30 ? '...' : ''), type: 'history' });
-      }
-      setInputText('');
-      if (textareaRef.current) {
-        textareaRef.current.value = '';
-        textareaRef.current.style.height = 'auto';
-      }
+  const handleCustomSubmit = (e?: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement> | any) => {
+    e?.preventDefault();
+    if (!input.trim()) return;
+    
+    const textToSend = input;
+    setInput('');
+
+    if (!activeChat) {
+      setActiveChat({ title: textToSend.substring(0, 30) + (textToSend.length > 30 ? '...' : ''), type: 'history' });
+    }
+    
+    sendMessage({ text: textToSend });
+    
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleCustomSubmit(e);
     }
   };
 
@@ -886,83 +905,75 @@ export default function TalimAIWorkspace() {
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
               {/* Chat Messages */}
               <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
-                <div style={{ width: '100%', maxWidth: '950px', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                  
-                  {/* User Message */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', alignItems: 'flex-start', gap: '12px' }}>
-                    {/* User Bubble */}
-                    <div style={{ 
-                      backgroundColor: '#ffffff', 
-                      padding: '14px 22px', 
-                      borderRadius: '4px 20px 20px 20px', 
-                      color: '#0F172A', 
-                      fontSize: '1.05rem', 
-                      lineHeight: 1.6, 
-                      maxWidth: '75%', 
-                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)', 
-                      fontWeight: 500 
-                    }}>
-                      {currentMessage}
+                <div style={{ width: '100%', maxWidth: '768px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {messages.length === 0 && (
+                    <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', color: 'white', opacity: 0.8, fontSize: '1.2rem', textAlign: 'center' }}>
+                      Kirimkan pertanyaan pertama Anda untuk memulai percakapan...
                     </div>
-                    {/* User Avatar */}
-                    <div style={{ 
-                      width: '40px', height: '40px', borderRadius: '50%', 
-                      backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)', 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', 
-                      flexShrink: 0, border: '2px solid rgba(255,255,255,0.5)', overflow: 'hidden' 
-                    }}>
-                      {userData?.avatar && !userData.avatar.includes('default_avatar') ? (
-                        <img src={userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                      )}
-                    </div>
-                  </div>
+                  )}
 
-                  {/* AI Message */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
-                    {/* AI Avatar */}
-                    <div style={{ 
-                      width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'white', 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1359c8', 
-                      flexShrink: 0, boxShadow: '0 4px 15px rgba(0,0,0,0.1)', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.8)' 
-                    }}>
-                      <img src="/icon.png" alt="AI" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    {/* AI Bubble / Text Content */}
-                    <div style={{ maxWidth: '85%' }}>
-                      <div style={{ color: '#ffffff', fontSize: '1.1rem', lineHeight: 1.9, textShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
-                        <p style={{ margin: '0 0 16px 0' }}>حسب نص <b style={{ color: '#FFD700' }}>{activeChat.title}</b>، شروط صحة الصلاة قبل الدخول فيها هي خمسة أساسية:</p>
-                        <ol style={{ margin: 0, paddingRight: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <li><b>طهارة الأعضاء</b> من الحدث الأكبر والأصغر، ومن النجس الذي لا يعفى عنه.</li>
-                          <li><b>ستر العورة</b> بلباس طاهر.</li>
-                          <li><b>الوقوف على مكان طاهر</b>.</li>
-                          <li><b>العلم بدخول الوقت</b> أو ظنه بالاجتهاد.</li>
-                          <li><b>استقبال القبلة</b> بالصدر.</li>
-                        </ol>
-                        <p style={{ margin: '20px 0 0 0', color: 'rgba(255,255,255,0.85)', fontSize: '1rem' }}>هل ترغب في شرح تفصيلي لأي من هذه الشروط؟</p>
+                  {messages.map(m => (
+                    <React.Fragment key={m.id}>
+                      {m.role === 'user' ? (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', alignItems: 'flex-start', gap: '12px' }}>
+                          <div style={{ 
+                            backgroundColor: '#ffffff', padding: '14px 22px', borderRadius: '4px 20px 20px 20px', 
+                            color: '#0F172A', fontSize: '1.05rem', lineHeight: 1.6, maxWidth: '75%', 
+                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)', fontWeight: 500 
+                          }}>
+                            {getMessageContent(m)}
+                          </div>
+                          <div style={{ 
+                            width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', 
+                            flexShrink: 0, border: '2px solid rgba(255,255,255,0.5)', overflow: 'hidden' 
+                          }}>
+                            {userData?.avatar && !userData.avatar.includes('default_avatar') ? (
+                              <img src={userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
+                          <div style={{ 
+                            width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'white', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1359c8', 
+                            flexShrink: 0, boxShadow: '0 4px 15px rgba(0,0,0,0.1)', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.8)' 
+                          }}>
+                            <img src="/icon.png" alt="AI" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div style={{ maxWidth: '85%' }}>
+                            <div style={{ color: '#ffffff', fontSize: '1.1rem', lineHeight: 1.9, textShadow: '0 1px 3px rgba(0,0,0,0.15)', whiteSpace: 'pre-wrap' }}>
+                              {getMessageContent(m)}
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}>
+                              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="نسخ"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="استماع"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+
+                  {isLoading && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
+                      <div style={{ 
+                        width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'white', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1359c8', 
+                        flexShrink: 0, boxShadow: '0 4px 15px rgba(0,0,0,0.1)', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.8)' 
+                      }}>
+                        <img src="/icon.png" alt="AI" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
-                      
-                      {/* Action Icons */}
-                      <div style={{ display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="نسخ" onMouseOver={e => e.currentTarget.style.color = '#ffffff'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        </button>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="استماع" onMouseOver={e => e.currentTarget.style.color = '#ffffff'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-                        </button>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="إجابة جيدة" onMouseOver={e => e.currentTarget.style.color = '#ffffff'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                        </button>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="إجابة سيئة" onMouseOver={e => e.currentTarget.style.color = '#ffffff'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(180deg)' }}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                        </button>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="إعادة التوليد" onMouseOver={e => e.currentTarget.style.color = '#ffffff'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
-                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
-                        </button>
+                      <div style={{ maxWidth: '85%' }}>
+                         <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', marginTop: '10px' }}>جاري الكتابة...</div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
 
@@ -1012,13 +1023,14 @@ export default function TalimAIWorkspace() {
                         placeholder="اكتب سؤالك أو استفسارك هنا..."
                         rows={1}
                         dir="auto"
-                        onInput={handleInput}
+                        value={input}
+                        onChange={handleInput}
                         onKeyDown={handleKeyDown}
                         style={{ flex: 1, background: 'none', border: 'none', resize: 'none', outline: 'none', fontSize: '1rem', padding: '8px 0', maxHeight: '150px', fontFamily: 'inherit', color: '#111827' }}
                       ></textarea>
 
-                      {inputText.trim().length > 0 ? (
-                        <button onClick={handleSend} style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-700)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-600)'} title="إرسال">
+                      {input.trim().length > 0 ? (
+                        <button onClick={handleCustomSubmit} style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-700)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-600)'} title="إرسال">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)', marginLeft: '2px' }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </button>
                       ) : (
@@ -1083,7 +1095,8 @@ export default function TalimAIWorkspace() {
                   placeholder="كيف يمكنني مساعدتك في دراستك اليوم؟"
                   rows={1}
                   dir="auto"
-                  onInput={handleInput}
+                  value={input}
+                  onChange={handleInput}
                   onKeyDown={handleKeyDown}
                 ></textarea>
                 
@@ -1102,8 +1115,8 @@ export default function TalimAIWorkspace() {
                   </div>
 
                   <div className="toolbar-left">
-                    {inputText.trim().length > 0 ? (
-                      <button onClick={handleSend} className="icon-btn" style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', paddingRight: '2px' }} title="إرسال">
+                    {input.trim().length > 0 ? (
+                      <button onClick={handleCustomSubmit} className="icon-btn" style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', paddingRight: '2px' }} title="إرسال">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)' }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                       </button>
                     ) : (
@@ -1119,7 +1132,7 @@ export default function TalimAIWorkspace() {
                 </div>
               </div>
 
-              {inputText.trim().length === 0 && (
+              {input.trim().length === 0 && (
                 <div className="prompt-chips-container">
                   <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('إعراب جملة')}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
@@ -1270,9 +1283,9 @@ export default function TalimAIWorkspace() {
                 <div 
                   key={idx}
                   onClick={() => {
+                    setInput(suggestion);
                     if (textareaRef.current) {
-                      textareaRef.current.value = suggestion;
-                      handleInput();
+                      textareaRef.current.focus();
                     }
                     setActivePromptCategory(null);
                   }}
