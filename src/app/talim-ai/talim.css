@@ -371,6 +371,17 @@
   max-width: 720px;
 }
 
+@keyframes popInPrompt {
+  0% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .prompt-chip-claude {
   background-color: white;
   border: 1px solid rgba(0,0,0,0.1);
@@ -384,7 +395,15 @@
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  
+  opacity: 0;
+  animation: popInPrompt 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+.prompt-chip-claude:nth-child(1) { animation-delay: 0.05s; }
+.prompt-chip-claude:nth-child(2) { animation-delay: 0.15s; }
+.prompt-chip-claude:nth-child(3) { animation-delay: 0.25s; }
+.prompt-chip-claude:nth-child(4) { animation-delay: 0.35s; }
 
 .prompt-chip-claude:hover {
   background-color: #f8fafc;

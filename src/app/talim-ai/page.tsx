@@ -38,6 +38,8 @@ export default function TalimAIWorkspace() {
 
   const [editingItem, setEditingItem] = useState<{ id: string, type: 'rename' | 'project' | 'group', currentValue: string } | null>(null);
   const [modalInputValue, setModalInputValue] = useState('');
+  const [inputText, setInputText] = useState('');
+  const [currentMessage, setCurrentMessage] = useState('ما هي شروط صحة الصلاة في هذا الباب؟');
 
   const togglePin = (id: string) => {
     setHistoryList(prev => prev.map(item => {
@@ -186,6 +188,29 @@ export default function TalimAIWorkspace() {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      setInputText(textareaRef.current.value);
+    }
+  };
+
+  const handleSend = () => {
+    const text = inputText.trim();
+    if (text) {
+      setCurrentMessage(text);
+      if (!activeChat) {
+        setActiveChat({ title: text.substring(0, 30) + (text.length > 30 ? '...' : ''), type: 'history' });
+      }
+      setInputText('');
+      if (textareaRef.current) {
+        textareaRef.current.value = '';
+        textareaRef.current.style.height = 'auto';
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
@@ -778,10 +803,7 @@ export default function TalimAIWorkspace() {
                 </span>
               </div>
               
-              {/* Caret */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '2px', flexShrink: 0 }}>
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+
             </div>
           </button>
         </div>
@@ -826,106 +848,138 @@ export default function TalimAIWorkspace() {
           {activeChat ? (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
               {/* Chat Header */}
-              <div style={{ padding: '16px 24px', borderBottom: '1px solid #E5E9EC', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '1.2rem' }}>{activeChat.type === 'book' ? '📖' : '🕒'}</span>
-                  <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+              <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', borderRadius: '8px', transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#111827', margin: 0 }}>
                     {activeChat.title}
                   </h2>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#6B7280' }}>
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
                 </div>
-                <button onClick={() => setActiveChat(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', fontSize: '0.9rem', fontWeight: 600 }}>
-                  إنهاء (Tutup)
+                <button onClick={() => setActiveChat(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', fontSize: '0.9rem', fontWeight: 500, padding: '4px 8px', borderRadius: '6px', transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                  إلغاء
                 </button>
               </div>
 
               {/* Chat Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                
-                {/* User Message */}
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '36px', height: '36px', backgroundColor: '#1E3A8A', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>ط</div>
-                  <div style={{ backgroundColor: '#F3F4F6', padding: '16px', borderRadius: '16px', borderTopRightRadius: '4px', color: '#111827', fontSize: '1rem', lineHeight: 1.6 }}>
-                    ما هي شروط صحة الصلاة في هذا الباب؟
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '768px', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                  
+                  {/* User Message */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+                    <div style={{ backgroundColor: '#F3F4F6', padding: '12px 18px', borderRadius: '16px', color: '#111827', fontSize: '1rem', lineHeight: 1.6, maxWidth: '80%' }}>
+                      {currentMessage}
+                    </div>
+                  </div>
+
+                  {/* AI Message */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '90%' }}>
+                      <div style={{ color: '#111827', fontSize: '1.05rem', lineHeight: 1.8 }}>
+                        <p style={{ margin: '0 0 16px 0' }}>حسب نص <b>{activeChat.title}</b>، شروط صحة الصلاة قبل الدخول فيها هي خمسة أساسية:</p>
+                        <ol style={{ margin: 0, paddingRight: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <li><b>طهارة الأعضاء</b> من الحدث الأكبر والأصغر، ومن النجس الذي لا يعفى عنه.</li>
+                          <li><b>ستر العورة</b> بلباس طاهر.</li>
+                          <li><b>الوقوف على مكان طاهر</b>.</li>
+                          <li><b>العلم بدخول الوقت</b> أو ظنه بالاجتهاد.</li>
+                          <li><b>استقبال القبلة</b> بالصدر.</li>
+                        </ol>
+                        <p style={{ margin: '16px 0 0 0', color: '#4B5563', fontSize: '0.95rem' }}>هل ترغب في شرح تفصيلي لأي من هذه الشروط؟</p>
+                      </div>
+                      
+                      {/* Action Icons */}
+                      <div style={{ display: 'flex', gap: '16px', marginTop: '16px', color: '#9CA3AF' }}>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="نسخ" onMouseOver={e => e.currentTarget.style.color = '#4B5563'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="استماع" onMouseOver={e => e.currentTarget.style.color = '#4B5563'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                        </button>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="إجابة جيدة" onMouseOver={e => e.currentTarget.style.color = '#4B5563'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                        </button>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="إجابة سيئة" onMouseOver={e => e.currentTarget.style.color = '#4B5563'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(180deg)' }}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                        </button>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="إعادة التوليد" onMouseOver={e => e.currentTarget.style.color = '#4B5563'} onMouseOut={e => e.currentTarget.style.color = 'inherit'}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {/* AI Message */}
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', alignSelf: 'flex-start', flexDirection: 'row' }}>
-                  <div style={{ width: '36px', height: '36px', backgroundColor: 'var(--color-primary-600)', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"></path></svg>
-                  </div>
-                  <div style={{ padding: '16px 0', color: '#111827', fontSize: '1rem', lineHeight: 1.8, width: '100%', maxWidth: '800px' }}>
-                    <p style={{ margin: '0 0 16px 0' }}>حسب نص <b>{activeChat.title}</b>، شروط صحة الصلاة قبل الدخول فيها هي خمسة أساسية:</p>
-                    <ol style={{ margin: 0, paddingRight: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <li><b>طهارة الأعضاء</b> من الحدث الأكبر والأصغر، ومن النجس الذي لا يعفى عنه.</li>
-                      <li><b>ستر العورة</b> بلباس طاهر.</li>
-                      <li><b>الوقوف على مكان طاهر</b>.</li>
-                      <li><b>العلم بدخول الوقت</b> أو ظنه بالاجتهاد.</li>
-                      <li><b>استقبال القبلة</b> بالصدر.</li>
-                    </ol>
-                    <p style={{ margin: '16px 0 0 0', color: '#4B5563', fontSize: '0.9rem' }}>هل ترغب في شرح تفصيلي لأي من هذه الشروط؟</p>
-                  </div>
-                </div>
-
               </div>
 
               {/* Chat Input Bottom */}
-              <div style={{ padding: '24px', backgroundColor: 'white', borderTop: '1px solid #E5E9EC' }}>
-                <div className="input-wrapper" style={{ margin: '0 auto', boxShadow: 'none', border: '1px solid #CBD5E1', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
-                  {attachedBooks.length > 0 && (
-                    <div style={{ display: 'flex', padding: '12px 16px', gap: '8px', flexWrap: 'wrap' }}>
-                      {attachedBooks.map(b => (
-                        <div key={b.id} style={{ 
-                          position: 'relative', width: '117px', height: '117px', 
-                          borderRadius: '12px', border: '1px solid #E5E9EC', overflow: 'hidden', 
-                          backgroundColor: '#1E293B', display: 'flex', flexDirection: 'column' 
-                        }}>
-                          {b.coverUrl ? (
-                            <img src={b.coverUrl} alt={b.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                              <div style={{ color: 'white', fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', textAlign: 'right', direction: 'rtl' }}>
-                                {b.title}
+              <div style={{ padding: '24px 0', backgroundColor: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '768px', padding: '0 24px' }}>
+                  <div style={{ backgroundColor: '#F9FAFB', borderRadius: '16px', display: 'flex', flexDirection: 'column', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+                    {attachedBooks.length > 0 && (
+                      <div style={{ display: 'flex', padding: '12px 16px', gap: '8px', flexWrap: 'wrap', borderBottom: '1px solid #E5E7EB' }}>
+                        {attachedBooks.map(b => (
+                          <div key={b.id} style={{ 
+                            position: 'relative', width: '80px', height: '80px', 
+                            borderRadius: '8px', border: '1px solid #E5E9EC', overflow: 'hidden', 
+                            backgroundColor: '#1E293B', display: 'flex', flexDirection: 'column' 
+                          }}>
+                            {b.coverUrl ? (
+                              <img src={b.coverUrl} alt={b.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ padding: '8px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ color: 'white', fontSize: '0.7rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', textAlign: 'right', direction: 'rtl' }}>
+                                  {b.title}
+                                </div>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', padding: '2px 4px', borderRadius: '4px', fontSize: '0.6rem', alignSelf: 'flex-end', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                  كتاب
+                                </div>
                               </div>
-                              <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', alignSelf: 'flex-end', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                كتاب
-                              </div>
-                            </div>
-                          )}
-                          <button onClick={() => setAttachedBooks(prev => prev.filter(x => x.id !== b.id))} style={{ 
-                            position: 'absolute', top: '6px', right: '6px', width: '22px', height: '22px', 
-                            borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', 
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white'
-                          }} title="إزالة">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <textarea 
-
-                    ref={textareaRef}
-                    className="main-input" 
-                    placeholder="اكتب سؤالك أو استفسارك هنا..."
-                    rows={1}
-                    dir="auto"
-                    onInput={handleInput}
-                  ></textarea>
-                  
-                  <div className="input-toolbar">
-                    <div className="toolbar-right">
-                      <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()}>
+                            )}
+                            <button onClick={() => setAttachedBooks(prev => prev.filter(x => x.id !== b.id))} style={{ 
+                              position: 'absolute', top: '4px', right: '4px', width: '18px', height: '18px', 
+                              borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', 
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white'
+                            }} title="إزالة">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', gap: '8px' }}>
+                      <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()} style={{ padding: '8px', flexShrink: 0, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                       </button>
-                    </div>
 
-                    <div className="toolbar-left">
-                      <button style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        إرسال
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(180deg)' }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                      </button>
+                      <textarea 
+                        ref={textareaRef}
+                        placeholder="اكتب سؤالك أو استفسارك هنا..."
+                        rows={1}
+                        dir="auto"
+                        onInput={handleInput}
+                        onKeyDown={handleKeyDown}
+                        style={{ flex: 1, background: 'none', border: 'none', resize: 'none', outline: 'none', fontSize: '1rem', padding: '8px 0', maxHeight: '150px', fontFamily: 'inherit', color: '#111827' }}
+                      ></textarea>
+
+                      {inputText.trim().length > 0 ? (
+                        <button onClick={handleSend} style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-700)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-600)'} title="إرسال">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)', marginLeft: '2px' }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                      ) : (
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }} title="تسجيل صوتي" onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="22"></line>
+                          </svg>
+                        </button>
+                      )}
                     </div>
+                  </div>
+                  
+                  <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: '#9CA3AF' }}>
+                    حاشية أداة ذكاء اصطناعي وقد تخطئ. يرجى التحقق من المعلومات المستخرجة من المتون.
                   </div>
                 </div>
               </div>
@@ -975,6 +1029,7 @@ export default function TalimAIWorkspace() {
                   rows={1}
                   dir="auto"
                   onInput={handleInput}
+                  onKeyDown={handleKeyDown}
                 ></textarea>
                 
                 <div className="input-toolbar">
@@ -992,36 +1047,43 @@ export default function TalimAIWorkspace() {
                   </div>
 
                   <div className="toolbar-left">
-
-                    <button className="icon-btn" title="تسجيل صوتي">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                        <line x1="12" y1="19" x2="12" y2="22"></line>
-                      </svg>
-                    </button>
+                    {inputText.trim().length > 0 ? (
+                      <button onClick={handleSend} className="icon-btn" style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', paddingRight: '2px' }} title="إرسال">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)' }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                      </button>
+                    ) : (
+                      <button className="icon-btn" title="تسجيل صوتي">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                          <line x1="12" y1="19" x2="12" y2="22"></line>
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="prompt-chips-container">
-                <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('إعراب جملة')}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                  إعراب جملة
+              {inputText.trim().length === 0 && (
+                <div className="prompt-chips-container">
+                  <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('إعراب جملة')}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    إعراب جملة
+                  </div>
+                  <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('شرح متن')}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    شرح متن
+                  </div>
+                  <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('ترجمة للملايو')}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                    ترجمة للملايو
+                  </div>
+                  <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('إنشاء أسئلة')}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    إنشاء أسئلة
+                  </div>
                 </div>
-                <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('شرح متن')}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                  شرح متن
-                </div>
-                <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('ترجمة للملايو')}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
-                  ترجمة للملايو
-                </div>
-                <div className="prompt-chip-claude" onClick={() => setActivePromptCategory('إنشاء أسئلة')}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                  إنشاء أسئلة
-                </div>
-              </div>
+              )}
             </div>
           )}
         </main>
