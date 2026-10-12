@@ -2,6 +2,8 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './talim.css';
 
 export default function TalimAIWorkspace() {
@@ -10,7 +12,7 @@ export default function TalimAIWorkspace() {
   const [userData, setUserData] = useState<{name: string, role: string, avatar: string, gender?: string} | null>(null);
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  const [activeChat, setActiveChat] = useState<{title: string, type: 'book' | 'history'} | null>(null);
+  const [activeChat, setActiveChat] = useState<{ id?: string; title: string; type: 'book' | 'history' } | null>(null);
   
   const [attachedBooks, setAttachedBooks] = useState<any[]>([]);
   const [showBooksModal, setShowBooksModal] = useState<boolean>(false);
@@ -18,6 +20,7 @@ export default function TalimAIWorkspace() {
   const [isLoadingBooks, setIsLoadingBooks] = useState(false);
   const [activePromptCategory, setActivePromptCategory] = useState<string | null>(null);
   const [historyMenuOpen, setHistoryMenuOpen] = useState<string | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
 
   const [isPinnedOpen, setIsPinnedOpen] = useState<boolean>(true);
   const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({});
@@ -32,23 +35,415 @@ export default function TalimAIWorkspace() {
     setOpenGroups(prev => ({ ...prev, [grp]: prev[grp] === false ? true : false }));
   };
 
-  const [historyList, setHistoryList] = useState<{id: string; title: string; isPinned?: boolean; project?: string | null; group?: string | null}[]>([
-    { id: '1', title: 'أحكام القصر في السفر', isPinned: true, project: null, group: null },
-    { id: '2', title: 'شرح إعراب الجملة', isPinned: false, project: null, group: null }
-  ]);
+  // ☁️ Riwayat chat aktual yang dimuat dari Cloudflare R2
+  const [historyList, setHistoryList] = useState<{id: string; title: string; isPinned?: boolean; project?: string | null; group?: string | null; updatedAt?: number}[]>([]);
 
   const [editingItem, setEditingItem] = useState<{ id: string, type: 'rename' | 'project' | 'group', currentValue: string } | null>(null);
   const [modalInputValue, setModalInputValue] = useState('');
   
-  const { messages, sendMessage, status, stop } = useChat();
+  const { messages, sendMessage, status, stop, setMessages } = useChat();
   const isLoading = status === 'submitted' || status === 'streaming';
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const isListeningRef = useRef<boolean>(false);
+  const [voiceLang, setVoiceLang] = useState<'id-ID' | 'ar-SA'>('id-ID');
+  const recognitionRef = useRef<any>(null);
+  const baseInputRef = useRef<string>('');
+  const accumulatedTranscriptRef = useRef<string>('');
+  
+  const [audioVolumes, setAudioVolumes] = useState<number[]>(() => Array(36).fill(4));
+  const audioContextRef = useRef<any>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const fallbackTimerRef = useRef<any>(null);
+
+  const startVisualizer = () => {
+    const numBars = 36;
+    if (fallbackTimerRef.current) clearInterval(fallbackTimerRef.current);
+    fallbackTimerRef.current = setInterval(() => {
+      setAudioVolumes(prev => {
+        return prev.map((_, i) => {
+          const distFromCenter = Math.abs(i - numBars / 2) / (numBars / 2);
+          const envelope = 1 - Math.pow(distFromCenter, 1.8);
+          const fluctuation = Math.random() * 18;
+          return Math.max(4, Math.round(4 + fluctuation * Math.max(0.2, envelope)));
+        });
+      });
+    }, 80);
+
+    if (typeof window !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        mediaStreamRef.current = stream;
+        try {
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            audioContextRef.current = ctx;
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 128;
+            const source = ctx.createMediaStreamSource(stream);
+            source.connect(analyser);
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            if (fallbackTimerRef.current) {
+              clearInterval(fallbackTimerRef.current);
+              fallbackTimerRef.current = null;
+            }
+
+            const updateWave = () => {
+              analyser.getByteFrequencyData(dataArray);
+              const newVolumes = [];
+              for (let i = 0; i < numBars; i++) {
+                const distFromCenter = Math.abs(i - numBars / 2) / (numBars / 2);
+                const envelope = 1 - Math.pow(distFromCenter, 1.8);
+                const binIdx = Math.floor((i / numBars) * (dataArray.length / 2));
+                const val = dataArray[binIdx] || 0;
+                const h = 4 + (val / 255) * 24 * Math.max(0.25, envelope);
+                newVolumes.push(Math.round(h));
+              }
+              setAudioVolumes(newVolumes);
+              animFrameRef.current = requestAnimationFrame(updateWave);
+            };
+            updateWave();
+          }
+        } catch (_) {}
+      }).catch(() => {});
+    }
+  };
+
+  const cleanupVisualizer = () => {
+    if (fallbackTimerRef.current) {
+      clearInterval(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch (_) {}
+      audioContextRef.current = null;
+    }
+    if (mediaStreamRef.current) {
+      try { mediaStreamRef.current.getTracks().forEach(t => t.stop()); } catch (_) {}
+      mediaStreamRef.current = null;
+    }
+    setAudioVolumes(Array(36).fill(4));
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (_) {}
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+    isListeningRef.current = false;
+  };
+
+  const handleStopListening = () => {
+    stopListening();
+    cleanupVisualizer();
+
+    const speechText = accumulatedTranscriptRef.current.trim();
+    const base = baseInputRef.current;
+    if (speechText) {
+      const separator = base && !base.endsWith(' ') ? ' ' : '';
+      const fullText = base ? `${base}${separator}${speechText}` : speechText;
+      setInput(fullText);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+      }, 50);
+    }
+    accumulatedTranscriptRef.current = '';
+    baseInputRef.current = '';
+  };
+
+  const handleCancelListening = () => {
+    stopListening();
+    cleanupVisualizer();
+    accumulatedTranscriptRef.current = '';
+    baseInputRef.current = '';
+  };
+
+  const startRecognition = (langOverride?: string) => {
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('متصفحك لا يدعم خاصية التعرف على الصوت (Speech Recognition). يرجى استخدام متصفح مثل Google Chrome أو Microsoft Edge.');
+      return;
+    }
+
+    try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (_) {}
+      }
+
+      const targetLang = langOverride || voiceLang;
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = targetLang;
+
+      baseInputRef.current = input;
+      accumulatedTranscriptRef.current = '';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        isListeningRef.current = true;
+        startVisualizer();
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        accumulatedTranscriptRef.current = transcript.trim();
+        // Disimpan sementara, dimunculkan ke input saat stop ditekan
+      };
+
+      recognition.onerror = (event: any) => {
+        if (event.error === 'not-allowed') {
+          alert('يرجى السماح بالوصول إلى الميكروفون لاستخدام الإدخال الصوتي.');
+        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          console.warn('Speech recognition notice:', event.error);
+        }
+        handleStopListening();
+      };
+
+      recognition.onend = () => {
+        if (isListeningRef.current) {
+          handleStopListening();
+        }
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('Error starting speech recognition:', err);
+      handleStopListening();
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      handleStopListening();
+    } else {
+      startRecognition(voiceLang);
+    }
+  };
+
+  const switchVoiceLang = (newLang: 'id-ID' | 'ar-SA') => {
+    setVoiceLang(newLang);
+    if (isListeningRef.current) {
+      const currentSpeech = accumulatedTranscriptRef.current.trim();
+      if (currentSpeech) {
+        const base = baseInputRef.current;
+        const sep = base && !base.endsWith(' ') ? ' ' : '';
+        baseInputRef.current = base ? `${base}${sep}${currentSpeech}` : currentSpeech;
+        accumulatedTranscriptRef.current = '';
+      }
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (_) {}
+      }
+      setTimeout(() => {
+        startRecognition(newLang);
+      }, 150);
+    }
+  };
+
+  const cleanTextForSpeech = (rawText: string) => {
+    return rawText
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/<[^>]+>/g, '')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^>\s+/gm, '')
+      .replace(/[*_~]{1,3}([^*_~]+)[*_~]{1,3}/g, '$1')
+      .replace(/^[-*+]\s+/gm, '')
+      .replace(/^\d+\.\s+/gm, '')
+      .replace(/[-*_]{3,}\s*$/gm, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const handleCopyMessage = async (id: string, text: string) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopiedMessageId(id);
+      setTimeout(() => {
+        setCopiedMessageId(prev => (prev === id ? null : prev));
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  };
+
+  const handleToggleSpeech = (id: string, rawText: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      alert('متصفحك لا يدعم خاصية قراءة النصوص صوتياً (Speech Synthesis).');
+      return;
+    }
+
+    if (speakingMessageId === id) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const textToSpeak = cleanTextForSpeech(rawText);
+    if (!textToSpeak) return;
+
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    const arabicChars = (textToSpeak.match(/[\u0600-\u06FF]/g) || []).length;
+    const latinChars = (textToSpeak.match(/[a-zA-Z]/g) || []).length;
+    const isAr = arabicChars > latinChars;
+
+    utterance.lang = isAr ? 'ar-SA' : 'id-ID';
+    utterance.rate = 0.95;
+
+    const voices = window.speechSynthesis.getVoices();
+    const matchedVoice = isAr
+      ? voices.find(v => v.lang.startsWith('ar'))
+      : voices.find(v => v.lang.startsWith('id'));
+
+    if (matchedVoice) {
+      utterance.voice = matchedVoice;
+    }
+
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+    };
+
+    utterance.onerror = (e: any) => {
+      if (e.error !== 'canceled' && e.error !== 'interrupted') {
+        console.warn('Speech synthesis notice:', e.error || e);
+      }
+      setSpeakingMessageId(null);
+    };
+
+    setSpeakingMessageId(id);
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+    }, 50);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      const onVoicesChanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.onvoiceschanged = onVoicesChanged;
+    }
+    return () => {
+      handleCancelListening();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const getUserId = () => {
+    if (typeof window === 'undefined') return 'guest';
+    try {
+      const u = localStorage.getItem('currentUser');
+      if (u) {
+        const parsed = JSON.parse(u);
+        return String(parsed.id || parsed.username || parsed.email || 'guest');
+      }
+    } catch (_) {}
+    return 'guest';
+  };
+
+  // ☁️ Muat riwayat percakapan dari Cloudflare R2 saat halaman dibuka
+  useEffect(() => {
+    const userId = getUserId();
+    fetch(`/api/chat/history?userId=${encodeURIComponent(userId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.chats && Array.isArray(data.chats)) {
+          setHistoryList(data.chats);
+        }
+      })
+      .catch(err => console.error('[R2 Chat] Gagal memuat daftar riwayat:', err));
+  }, []);
+
+  const openChatSession = async (item: { id: string; title: string; type?: 'book' | 'history' }) => {
+    handleCancelListening();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+    }
+    setActiveChat({ id: item.id, title: item.title, type: item.type || 'history' });
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
+
+    try {
+      const userId = getUserId();
+      const res = await fetch(`/api/chat/history?userId=${encodeURIComponent(userId)}&chatId=${encodeURIComponent(item.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.chat?.messages && Array.isArray(data.chat.messages)) {
+          setMessages(data.chat.messages);
+        }
+        if (data.chat?.attachedBooks && Array.isArray(data.chat.attachedBooks)) {
+          setAttachedBooks(data.chat.attachedBooks);
+        }
+      }
+    } catch (err) {
+      console.error('[R2 Chat] Gagal membuka sesi chat:', err);
+    }
+  };
+
+  const startNewChat = () => {
+    handleCancelListening();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+    }
+    setActiveChat(null);
+    setMessages([]);
+    setAttachedBooks([]);
+    setInput('');
+  };
+
   const getMessageContent = (m: any) => {
     if (typeof m.content === 'string' && m.content) return m.content;
     if (Array.isArray(m.parts)) {
-      return m.parts.map((p: any) => (p.type === 'text' ? p.text : '')).join('');
+      return m.parts.map((p: any) => {
+        if (p.type === 'text') return p.text || '';
+        if (p.type === 'error') return `⚠️ ${p.error?.message || p.error || 'Terjadi kesalahan sistem'}`;
+        return '';
+      }).join('');
     }
     return '';
   };
@@ -57,17 +452,66 @@ export default function TalimAIWorkspace() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const togglePin = (id: string) => {
+  // ☁️ Auto-save percakapan ke Cloudflare R2 setiap selesai menerima respons
+  useEffect(() => {
+    if (status === 'ready' && messages.length > 0) {
+      const userId = getUserId();
+      const firstUserMsg = messages.find(m => m.role === 'user');
+      const rawContent = getMessageContent(firstUserMsg);
+      const defaultTitle = rawContent.slice(0, 32).trim() + (rawContent.length > 32 ? '...' : '') || 'محادثة جديدة';
+
+      const currentId = activeChat?.id || `chat-${Date.now()}`;
+      const currentTitle = activeChat?.title || defaultTitle;
+
+      if (!activeChat?.id) {
+        setActiveChat({ id: currentId, title: currentTitle, type: 'history' });
+      }
+
+      const sessionData = {
+        id: currentId,
+        title: currentTitle,
+        messages,
+        attachedBooks,
+        isPinned: historyList.find(h => h.id === currentId)?.isPinned || false,
+        project: historyList.find(h => h.id === currentId)?.project || null,
+        group: historyList.find(h => h.id === currentId)?.group || null,
+        updatedAt: Date.now(),
+      };
+
+      fetch('/api/chat/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, session: sessionData }),
+      })
+        .then(res => res.json())
+        .then(() => {
+          fetch(`/api/chat/history?userId=${encodeURIComponent(userId)}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.chats && Array.isArray(d.chats)) setHistoryList(d.chats);
+            });
+        })
+        .catch(err => console.error('[R2 Auto-save Error]', err));
+    }
+  }, [status, messages.length]);
+
+  const togglePin = async (id: string) => {
+    const currentItem = historyList.find(item => item.id === id);
+    if (!currentItem) return;
+    const newPinned = !currentItem.isPinned;
+
     setHistoryList(prev => prev.map(item => {
       if (item.id !== id) return item;
-      const isNowPinned = !item.isPinned;
-      return {
-        ...item,
-        isPinned: isNowPinned,
-        project: isNowPinned ? item.project : null
-      };
+      return { ...item, isPinned: newPinned, project: newPinned ? item.project : null };
     }));
     setHistoryMenuOpen(null);
+
+    const userId = getUserId();
+    await fetch('/api/chat/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, action: 'patch', chatId: id, patch: { isPinned: newPinned } }),
+    });
   };
 
   const handleRename = (id: string, currentTitle: string) => {
@@ -88,45 +532,68 @@ export default function TalimAIWorkspace() {
     setHistoryMenuOpen(null);
   };
 
-  const removeFromGroup = (id: string) => {
+  const removeFromGroup = async (id: string) => {
     setHistoryList(prev => prev.map(item => item.id === id ? { ...item, group: null } : item));
     setHistoryMenuOpen(null);
+
+    const userId = getUserId();
+    await fetch('/api/chat/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, action: 'patch', chatId: id, patch: { group: null } }),
+    });
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     setHistoryList(prev => prev.filter(item => item.id !== id));
+    if (activeChat?.id === id) {
+      startNewChat();
+    }
     setHistoryMenuOpen(null);
+
+    const userId = getUserId();
+    await fetch(`/api/chat/history?userId=${encodeURIComponent(userId)}&chatId=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
   };
 
-  const saveEditing = () => {
+  const saveEditing = async () => {
     if (!editingItem) return;
+    const userId = getUserId();
+    const id = editingItem.id;
+    let patch: any = {};
+
+    if (editingItem.type === 'rename') {
+      const newTitle = modalInputValue.trim() || 'محادثة';
+      patch.title = newTitle;
+      if (activeChat?.id === id) {
+        setActiveChat(prev => prev ? { ...prev, title: newTitle } : null);
+      }
+    } else if (editingItem.type === 'project') {
+      const projName = modalInputValue.trim() || null;
+      patch.project = projName;
+      if (projName) patch.isPinned = true;
+    } else if (editingItem.type === 'group') {
+      const grpName = modalInputValue.trim() || null;
+      patch.group = grpName;
+      if (grpName) {
+        setCreatedGroups(prev => Array.from(new Set([...prev, grpName])));
+      }
+    }
+
     setHistoryList(prev => prev.map(item => {
-      if (item.id !== editingItem.id) return item;
-      if (editingItem.type === 'rename') {
-        const newTitle = modalInputValue.trim() || item.title;
-        if (activeChat?.title === item.title) {
-          setActiveChat(prev => prev ? { ...prev, title: newTitle } : null);
-        }
-        return { ...item, title: newTitle };
-      }
-      if (editingItem.type === 'project') {
-        const projName = modalInputValue.trim() || null;
-        return { 
-          ...item, 
-          project: projName,
-          isPinned: projName ? true : item.isPinned
-        };
-      }
-      if (editingItem.type === 'group') {
-        const grpName = modalInputValue.trim() || null;
-        if (grpName) {
-          setCreatedGroups(prev => Array.from(new Set([...prev, grpName])));
-        }
-        return { ...item, group: grpName };
-      }
-      return item;
+      if (item.id !== id) return item;
+      return { ...item, ...patch };
     }));
     setEditingItem(null);
+
+    if (Object.keys(patch).length > 0) {
+      await fetch('/api/chat/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'patch', chatId: id, patch }),
+      });
+    }
   };
 
 
@@ -180,6 +647,15 @@ export default function TalimAIWorkspace() {
     }
   }, []);
 
+  const getUserAvatarSrc = () => {
+    if (userData?.avatar && !userData.avatar.includes('default_avatar')) {
+      return userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`;
+    }
+    return userData?.gender === 'female' 
+      ? 'https://api.dicebear.com/9.x/avataaars/svg?seed=Jane&backgroundColor=ffdfbf' 
+      : 'https://api.dicebear.com/9.x/avataaars/svg?seed=John&backgroundColor=b6e3f4';
+  };
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -210,13 +686,40 @@ export default function TalimAIWorkspace() {
 
   const handleCustomSubmit = (e?: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement> | any) => {
     e?.preventDefault();
-    if (!input.trim()) return;
+    if (isUploadingFile) return;
+
+    let textToSend = input.trim();
+    if (isListeningRef.current || isListening) {
+      const speechText = accumulatedTranscriptRef.current.trim();
+      const base = baseInputRef.current.trim();
+      if (speechText) {
+        textToSend = base ? `${base} ${speechText}` : speechText;
+      }
+      handleStopListening();
+    }
+
+    if (!textToSend.trim()) return;
     
-    const textToSend = input;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+    }
+    
     setInput('');
 
+    // Lampirkan konteks file/buku Cloudflare R2 jika ada
+    if (attachedBooks.length > 0) {
+      const attachmentsContext = attachedBooks.map(b => {
+        if (b.publicUrl) {
+          return `[ملف مرفق: "${b.title}" - رابط: ${b.publicUrl}]`;
+        }
+        return `[كتاب مرفق: "${b.title}"]`;
+      }).join('\n');
+      textToSend = `${attachmentsContext}\n\n${textToSend}`;
+    }
+
     if (!activeChat) {
-      setActiveChat({ title: textToSend.substring(0, 30) + (textToSend.length > 30 ? '...' : ''), type: 'history' });
+      setActiveChat({ id: `chat-${Date.now()}`, title: textToSend.substring(0, 30) + (textToSend.length > 30 ? '...' : ''), type: 'history' });
     }
     
     sendMessage({ text: textToSend });
@@ -233,14 +736,64 @@ export default function TalimAIWorkspace() {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setAttachedBooks(prev => [...prev, {
-        id: `file-${Date.now()}`,
-        title: file.name,
-        coverUrl: null
-      }]);
+      e.target.value = '';
+
+      if (file.size > 10 * 1024 * 1024) {
+        alert('حجم الملف كبير جداً. الحد الأقصى هو 10 ميجابايت.');
+        return;
+      }
+
+      setIsUploadingFile(true);
+      try {
+        // 1. Minta presigned upload URL ke Cloudflare R2
+        const res = await fetch('/api/chat/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type || 'application/octet-stream',
+            size: file.size,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'فشل في تهيئة رفع الملف إلى Cloudflare R2');
+        }
+
+        const { uploadUrl, objectKey, publicUrl } = await res.json();
+
+        // 2. Upload file langsung ke Cloudflare R2 bucket
+        const uploadRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream',
+          },
+          body: file,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('فشل رفع الملف إلى التخزين السحابي Cloudflare R2');
+        }
+
+        // 3. Masukkan ke attachedBooks
+        setAttachedBooks(prev => [...prev, {
+          id: objectKey,
+          title: file.name,
+          coverUrl: null,
+          publicUrl,
+          size: file.size,
+          isFile: true,
+        }]);
+      } catch (err: any) {
+        console.error('[Upload File R2 Error]', err);
+        alert(err.message || 'حدث خطأ أثناء رفع الملف إلى Cloudflare R2');
+      } finally {
+        setIsUploadingFile(false);
+      }
     }
   };
 
@@ -289,7 +842,7 @@ export default function TalimAIWorkspace() {
           </div>
         </div>
 
-        <button className="new-chat-btn" onClick={() => setActiveChat(null)}>
+        <button className="new-chat-btn" onClick={startNewChat}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -350,7 +903,7 @@ export default function TalimAIWorkspace() {
                               <div 
                                 key={item.id} 
                                 className="history-item" 
-                                onClick={() => { setActiveChat({title: item.title, type: 'history'}); setIsSidebarOpen(false); }}
+                                onClick={() => openChatSession(item)}
                               >
                                 <div className="history-item-content" style={{ flex: 1, minWidth: 0 }}>
                                   <div className="history-item-icon" style={{ borderColor: '#9CA3AF' }}></div>
@@ -412,7 +965,7 @@ export default function TalimAIWorkspace() {
                     <div 
                       key={item.id} 
                       className="history-item" 
-                      onClick={() => { setActiveChat({title: item.title, type: 'history'}); setIsSidebarOpen(false); }}
+                      onClick={() => openChatSession(item)}
                     >
                       <div className="history-item-content" style={{ flex: 1, minWidth: 0, gap: '10px' }}>
                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', border: '1.5px solid #9CA3AF', flexShrink: 0 }}></div>
@@ -520,7 +1073,7 @@ export default function TalimAIWorkspace() {
                       <div 
                         key={item.id} 
                         className="history-item" 
-                        onClick={() => { setActiveChat({title: item.title, type: 'history'}); setIsSidebarOpen(false); }}
+                        onClick={() => openChatSession(item)}
                       >
                         <div className="history-item-content" style={{ flex: 1, minWidth: 0 }}>
                           <div className="history-item-icon" style={{ borderColor: '#9CA3AF' }}></div>
@@ -609,7 +1162,7 @@ export default function TalimAIWorkspace() {
                       <div 
                         key={item.id} 
                         className="history-item" 
-                        onClick={() => { setActiveChat({title: item.title, type: 'history'}); setIsSidebarOpen(false); }}
+                        onClick={() => openChatSession(item)}
                       >
                         <div className="history-item-content" style={{ flex: 1, minWidth: 0 }}>
                           <div className="history-item-icon" style={{ borderColor: '#9CA3AF' }}></div>
@@ -694,7 +1247,7 @@ export default function TalimAIWorkspace() {
                   <div 
                     key={item.id} 
                     className="history-item" 
-                    onClick={() => { setActiveChat({title: item.title, type: 'history'}); setIsSidebarOpen(false); }}
+                    onClick={() => openChatSession(item)}
                   >
                     <div className="history-item-content" style={{ flex: 1, minWidth: 0 }}>
                       <div className="history-item-icon" style={{ borderColor: '#9CA3AF' }}></div>
@@ -790,17 +1343,11 @@ export default function TalimAIWorkspace() {
                 fontWeight: 700, fontSize: '12px', fontFamily: 'var(--font-base)', overflow: 'hidden',
                 flexShrink: 0
               }}>
-                {userData?.avatar && !userData.avatar.includes('default_avatar') ? (
-                  <img src={userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <img 
-                    src={userData?.gender === 'female' 
-                      ? 'https://api.dicebear.com/9.x/avataaars/svg?seed=Jane&backgroundColor=ffdfbf' 
-                      : 'https://api.dicebear.com/9.x/avataaars/svg?seed=John&backgroundColor=b6e3f4'} 
-                    alt="Avatar" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
-                )}
+                <img 
+                  src={getUserAvatarSrc()} 
+                  alt="Avatar" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
               </div>
               
               {/* Name */}
@@ -912,31 +1459,46 @@ export default function TalimAIWorkspace() {
                     </div>
                   )}
 
-                  {messages.map(m => (
+                  {messages.map((m, idx) => {
+                    let userMsgForThisTurn = m;
+                    if (m.role !== 'user') {
+                      for (let i = idx - 1; i >= 0; i--) {
+                        if (messages[i].role === 'user') {
+                          userMsgForThisTurn = messages[i];
+                          break;
+                        }
+                      }
+                    }
+                    const userText = getMessageContent(userMsgForThisTurn);
+                    const arabicChars = (userText.match(/[\u0600-\u06FF]/g) || []).length;
+                    const latinChars = (userText.match(/[a-zA-Z]/g) || []).length;
+                    const isAr = arabicChars > latinChars;
+                    return (
                     <React.Fragment key={m.id}>
                       {m.role === 'user' ? (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', alignItems: 'flex-start', gap: '12px' }}>
+                        <div dir={isAr ? "rtl" : "ltr"} style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
                           <div style={{ 
-                            backgroundColor: '#ffffff', padding: '14px 22px', borderRadius: '4px 20px 20px 20px', 
+                            backgroundColor: '#ffffff', padding: '14px 22px', borderRadius: isAr ? '4px 20px 20px 20px' : '20px 4px 20px 20px', 
                             color: '#0F172A', fontSize: '1.05rem', lineHeight: 1.6, maxWidth: '75%', 
                             boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08)', fontWeight: 500 
                           }}>
                             {getMessageContent(m)}
                           </div>
                           <div style={{ 
-                            width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
+                            width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#1E3A8A',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', 
-                            flexShrink: 0, border: '2px solid rgba(255,255,255,0.5)', overflow: 'hidden' 
+                            flexShrink: 0, border: '2px solid rgba(255,255,255,0.8)', overflow: 'hidden',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
                           }}>
-                            {userData?.avatar && !userData.avatar.includes('default_avatar') ? (
-                              <img src={userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            )}
+                            <img 
+                              src={getUserAvatarSrc()} 
+                              alt="User" 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
                           </div>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
+                        <div dir={isAr ? "rtl" : "ltr"} style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
                           <div style={{ 
                             width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'white', 
                             display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1359c8', 
@@ -945,21 +1507,122 @@ export default function TalimAIWorkspace() {
                             <img src="/icon.png" alt="AI" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                           <div style={{ maxWidth: '85%' }}>
-                            <div style={{ color: '#ffffff', fontSize: '1.1rem', lineHeight: 1.9, textShadow: '0 1px 3px rgba(0,0,0,0.15)', whiteSpace: 'pre-wrap' }}>
-                              {getMessageContent(m)}
+                            <div className="markdown-body" style={{ color: '#ffffff', fontSize: '1.05rem', lineHeight: 1.6, textShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {getMessageContent(m)}
+                              </ReactMarkdown>
                             </div>
-                            <div style={{ display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}>
-                              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="نسخ"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="استماع"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></button>
-                            </div>
+                            {(() => {
+                              const aiContent = getMessageContent(m);
+                              const isCopied = copiedMessageId === m.id;
+                              const isSpeaking = speakingMessageId === m.id;
+                              return (
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', alignItems: 'center' }}>
+                                  {/* Tombol Salin / Copy */}
+                                  <button
+                                    onClick={() => handleCopyMessage(m.id, aiContent)}
+                                    style={{
+                                      background: isCopied ? 'rgba(74, 222, 128, 0.2)' : 'none',
+                                      border: isCopied ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid transparent',
+                                      cursor: 'pointer',
+                                      color: isCopied ? '#4ade80' : 'rgba(255,255,255,0.75)',
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    onMouseOver={e => {
+                                      if (!isCopied) {
+                                        e.currentTarget.style.color = '#ffffff';
+                                        e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
+                                      }
+                                    }}
+                                    onMouseOut={e => {
+                                      if (!isCopied) {
+                                        e.currentTarget.style.color = 'rgba(255,255,255,0.75)';
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                      }
+                                    }}
+                                    title={isCopied ? 'تم النسخ بنجاح! / Disalin!' : 'نسخ النص / Salin teks'}
+                                  >
+                                    {isCopied ? (
+                                      <>
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                          <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>تم النسخ</span>
+                                      </>
+                                    ) : (
+                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                      </svg>
+                                    )}
+                                  </button>
+
+                                  {/* Tombol Dengar / TTS / Listen */}
+                                  <button
+                                    onClick={() => handleToggleSpeech(m.id, aiContent)}
+                                    style={{
+                                      background: isSpeaking ? 'rgba(147, 197, 253, 0.22)' : 'none',
+                                      border: isSpeaking ? '1px solid rgba(147, 197, 253, 0.4)' : '1px solid transparent',
+                                      cursor: 'pointer',
+                                      color: isSpeaking ? '#bfdbfe' : 'rgba(255,255,255,0.75)',
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    onMouseOver={e => {
+                                      if (!isSpeaking) {
+                                        e.currentTarget.style.color = '#ffffff';
+                                        e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
+                                      }
+                                    }}
+                                    onMouseOut={e => {
+                                      if (!isSpeaking) {
+                                        e.currentTarget.style.color = 'rgba(255,255,255,0.75)';
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                      }
+                                    }}
+                                    title={isSpeaking ? 'إيقاف القراءة الصوتية / Hentikan suara' : 'استماع للنص / Dengarkan teks'}
+                                  >
+                                    {isSpeaking ? (
+                                      <>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                          <rect x="5" y="5" width="14" height="14" rx="3"></rect>
+                                        </svg>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>إيقاف</span>
+                                      </>
+                                    ) : (
+                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                      </svg>
+                                    )}
+                                  </button>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       )}
                     </React.Fragment>
-                  ))}
+                  )})}
 
-                  {isLoading && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
+                  {isLoading && (() => {
+                    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+                    const lastUserText = lastUserMsg ? getMessageContent(lastUserMsg) : '';
+                    const arabicCharsLast = (lastUserText.match(/[\u0600-\u06FF]/g) || []).length;
+                    const latinCharsLast = (lastUserText.match(/[a-zA-Z]/g) || []).length;
+                    const isLastUserAr = arabicCharsLast > latinCharsLast;
+                    return (
+                    <div dir={isLastUserAr ? "rtl" : "ltr"} style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', alignItems: 'flex-start', gap: '16px' }}>
                       <div style={{ 
                         width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'white', 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1359c8', 
@@ -968,10 +1631,13 @@ export default function TalimAIWorkspace() {
                         <img src="/icon.png" alt="AI" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div style={{ maxWidth: '85%' }}>
-                         <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', marginTop: '10px' }}>جاري الكتابة...</div>
+                         <div className="typing-indicator" style={{ marginTop: '14px', marginLeft: '8px' }}>
+                           <span></span><span></span><span></span>
+                         </div>
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
 
                   <div ref={messagesEndRef} />
                 </div>
@@ -979,9 +1645,9 @@ export default function TalimAIWorkspace() {
 
               {/* Chat Input Bottom */}
               <div style={{ padding: '16px 0 24px 0', backgroundColor: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ width: '100%', maxWidth: '768px', padding: '0 24px' }}>
+                <div style={{ width: '100%', maxWidth: '768px', padding: '0 16px', boxSizing: 'border-box' }}>
                   <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255, 255, 255, 0.4)', boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)', overflow: 'hidden' }}>
-                    {attachedBooks.length > 0 && (
+                    {(attachedBooks.length > 0 || isUploadingFile) && (
                       <div style={{ display: 'flex', padding: '12px 16px', gap: '8px', flexWrap: 'wrap', borderBottom: '1px solid #E5E7EB' }}>
                         {attachedBooks.map(b => (
                           <div key={b.id} style={{ 
@@ -997,7 +1663,7 @@ export default function TalimAIWorkspace() {
                                   {b.title}
                                 </div>
                                 <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', padding: '2px 4px', borderRadius: '4px', fontSize: '0.6rem', alignSelf: 'flex-end', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                  كتاب
+                                  {b.isFile ? 'ملف' : 'كتاب'}
                                 </div>
                               </div>
                             )}
@@ -1010,42 +1676,208 @@ export default function TalimAIWorkspace() {
                             </button>
                           </div>
                         ))}
+                        {isUploadingFile && (
+                          <div style={{ 
+                            position: 'relative', width: '80px', height: '80px', 
+                            borderRadius: '8px', border: '1.5px dashed #2563EB', 
+                            backgroundColor: '#EFF6FF', display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center', gap: '4px'
+                          }}>
+                            <div className="typing-indicator" style={{ display: 'flex', gap: '3px' }}>
+                              <span style={{ width: '4px', height: '4px', background: '#2563EB' }}></span>
+                              <span style={{ width: '4px', height: '4px', background: '#2563EB' }}></span>
+                              <span style={{ width: '4px', height: '4px', background: '#2563EB' }}></span>
+                            </div>
+                            <span style={{ fontSize: '0.65rem', color: '#2563EB', fontWeight: 600 }}>جاري الرفع...</span>
+                          </div>
+                        )}
                       </div>
                     )}
                     
-                    <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', gap: '8px' }}>
-                      <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()} style={{ padding: '8px', flexShrink: 0, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      </button>
-
-                      <textarea 
-                        ref={textareaRef}
-                        placeholder="اكتب سؤالك أو استفسارك هنا..."
-                        rows={1}
-                        dir="auto"
-                        value={input}
-                        onChange={handleInput}
-                        onKeyDown={handleKeyDown}
-                        style={{ flex: 1, background: 'none', border: 'none', resize: 'none', outline: 'none', fontSize: '1rem', padding: '8px 0', maxHeight: '150px', fontFamily: 'inherit', color: '#111827' }}
-                      ></textarea>
-
-                      {input.trim().length > 0 ? (
-                        <button onClick={handleCustomSubmit} style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-700)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-600)'} title="إرسال">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)', marginLeft: '2px' }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        </button>
-                      ) : (
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }} title="تسجيل صوتي" onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                            <line x1="12" y1="19" x2="12" y2="22"></line>
+                    <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', gap: '8px', backgroundColor: '#ffffff', minHeight: '52px' }}>
+                      {/* Sisi Kanan (Start di RTL): Tombol Lampiran atau Batal saat merekam */}
+                      {isListening ? (
+                        <button
+                          type="button"
+                          onClick={handleCancelListening}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#9CA3AF',
+                            cursor: 'pointer',
+                            padding: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '50%',
+                            transition: 'all 0.2s',
+                            flexShrink: 0
+                          }}
+                          onMouseOver={e => { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; }}
+                          onMouseOut={e => { e.currentTarget.style.color = '#9CA3AF'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                          title="إلغاء التسجيل / Batal"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
                           </svg>
                         </button>
+                      ) : (
+                        <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()} style={{ padding: '8px', flexShrink: 0, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
                       )}
+
+                      {/* Bagian Tengah: Gelombang Suara Hitam saat merekam ATAU Textarea saat biasa */}
+                      {isListening ? (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '3px',
+                          flex: 1,
+                          minWidth: 0,
+                          height: '36px',
+                          padding: '0 8px',
+                          overflow: 'hidden'
+                        }}>
+                          {audioVolumes.map((vol, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                width: '2.5px',
+                                height: `${vol}px`,
+                                backgroundColor: '#111827',
+                                borderRadius: '9999px',
+                                display: 'inline-block',
+                                transition: 'height 0.08s ease',
+                                opacity: 0.9,
+                                flexShrink: 0
+                              }}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <textarea 
+                          ref={textareaRef}
+                          placeholder="اكتب سؤالك أو استفسارك هنا..."
+                          rows={1}
+                          dir="auto"
+                          value={input}
+                          onChange={handleInput}
+                          onKeyDown={handleKeyDown}
+                          style={{ flex: 1, background: 'none', border: 'none', resize: 'none', outline: 'none', fontSize: '1rem', padding: '8px 0', maxHeight: '150px', fontFamily: 'inherit', color: '#111827' }}
+                        ></textarea>
+                      )}
+
+                      {/* Sisi Kiri (End di RTL): Tombol Mic/Stop, dan Tombol Kirim di sebelahnya */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        {isListening ? (
+                          <button
+                            type="button"
+                            onClick={handleStopListening}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: '2px solid #111827',
+                              backgroundColor: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              padding: 0,
+                              flexShrink: 0,
+                              transition: 'all 0.2s',
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                            }}
+                            onMouseOver={e => {
+                              e.currentTarget.style.backgroundColor = '#F3F4F6';
+                              e.currentTarget.style.transform = 'scale(1.06)';
+                            }}
+                            onMouseOut={e => {
+                              e.currentTarget.style.backgroundColor = '#ffffff';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                            title="إنهاء التسجيل وتثبيت النص / Selesai merekam"
+                          >
+                            <div style={{
+                              width: '12px',
+                              height: '12px',
+                              backgroundColor: '#111827',
+                              borderRadius: '3px'
+                            }} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={toggleListening}
+                            className="icon-btn"
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              color: '#6B7280',
+                              flexShrink: 0,
+                              transition: 'background-color 0.2s'
+                            }}
+                            title="تسجيل صوتي (إملاء) / Dikte Suara"
+                            onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'}
+                            onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                              <line x1="12" y1="19" x2="12" y2="22"></line>
+                            </svg>
+                          </button>
+                        )}
+
+                        {(input.trim().length > 0 || isListening) && (
+                          <button
+                            type="button"
+                            onClick={handleCustomSubmit}
+                            className="icon-btn"
+                            style={{
+                              backgroundColor: 'var(--color-primary-600)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '36px',
+                              height: '36px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              paddingRight: '2px',
+                              flexShrink: 0,
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseOver={e => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-primary-700)';
+                              e.currentTarget.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseOut={e => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-primary-600)';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                            title="إرسال"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)' }}>
+                              <line x1="22" y1="2" x2="11" y2="13"></line>
+                              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.8)', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+                  <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.8)', textShadow: '0 1px 2px rgba(0,0,0,0.3)', padding: '0 8px', wordBreak: 'break-word' }}>
                     حاشية أداة ذكاء اصطناعي وقد تخطئ. يرجى التحقق من المعلومات المستخرجة من المتون.
                   </div>
                 </div>
@@ -1058,7 +1890,7 @@ export default function TalimAIWorkspace() {
               </h1>
 
               <div className="input-wrapper" style={{ display: 'flex', flexDirection: 'column' }}>
-                {attachedBooks.length > 0 && (
+                {(attachedBooks.length > 0 || isUploadingFile) && (
                   <div style={{ display: 'flex', padding: '12px 16px', gap: '8px', flexWrap: 'wrap' }}>
                     {attachedBooks.map(b => (
                       <div key={b.id} style={{ 
@@ -1074,7 +1906,7 @@ export default function TalimAIWorkspace() {
                               {b.title}
                             </div>
                             <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', alignSelf: 'flex-end', border: '1px solid rgba(255,255,255,0.2)' }}>
-                              كتاب
+                              {b.isFile ? 'ملف' : 'كتاب'}
                             </div>
                           </div>
                         )}
@@ -1087,49 +1919,259 @@ export default function TalimAIWorkspace() {
                         </button>
                       </div>
                     ))}
-                  </div>
-                )}
-                <textarea 
-                  ref={textareaRef}
-                  className="main-input" 
-                  placeholder="كيف يمكنني مساعدتك في دراستك اليوم؟"
-                  rows={1}
-                  dir="auto"
-                  value={input}
-                  onChange={handleInput}
-                  onKeyDown={handleKeyDown}
-                ></textarea>
-                
-                <div className="input-toolbar">
-                  <div className="toolbar-right">
-                    <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                    </button>
-                    <button className="icon-btn" title="تحديد الكتاب" style={{ display: 'flex', gap: '6px', fontSize: '0.85rem', padding: '6px 12px', borderRadius: '16px', border: '1px solid #e2e8f0' }} onClick={() => setShowBooksModal(true)}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                      تحديد المصدر
-                    </button>
-                  </div>
-
-                  <div className="toolbar-left">
-                    {input.trim().length > 0 ? (
-                      <button onClick={handleCustomSubmit} className="icon-btn" style={{ backgroundColor: 'var(--color-primary-600)', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', paddingRight: '2px' }} title="إرسال">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)' }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                      </button>
-                    ) : (
-                      <button className="icon-btn" title="تسجيل صوتي">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                          <line x1="12" y1="19" x2="12" y2="22"></line>
-                        </svg>
-                      </button>
+                    {isUploadingFile && (
+                      <div style={{ 
+                        position: 'relative', width: '117px', height: '117px', 
+                        borderRadius: '12px', border: '1.5px dashed #2563EB', 
+                        backgroundColor: '#EFF6FF', display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', gap: '6px'
+                      }}>
+                        <div className="typing-indicator" style={{ display: 'flex', gap: '4px' }}>
+                          <span style={{ width: '5px', height: '5px', background: '#2563EB' }}></span>
+                          <span style={{ width: '5px', height: '5px', background: '#2563EB' }}></span>
+                          <span style={{ width: '5px', height: '5px', background: '#2563EB' }}></span>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: '#2563EB', fontWeight: 600 }}>جاري الرفع...</span>
+                      </div>
                     )}
                   </div>
-                </div>
+                )}
+                {/* Area Input Tengah: Gelombang Suara Hitam berlatar Putih saat merekam ATAU Textarea saat biasa */}
+                {isListening ? (
+                  /* Saat merekam: Sejajarkan dalam satu baris (Batal/Bahasa - Gelombang Suara - Stop/Kirim) */
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    minHeight: '52px',
+                    padding: '4px 0'
+                  }}>
+                    {/* Sisi Kanan (Start di RTL): Batal */}
+                    <button
+                      type="button"
+                      onClick={handleCancelListening}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#9CA3AF',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%',
+                        transition: 'all 0.2s',
+                        flexShrink: 0
+                      }}
+                      onMouseOver={e => { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; }}
+                      onMouseOut={e => { e.currentTarget.style.color = '#9CA3AF'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                      title="إلغاء التسجيل / Batal"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+
+                    {/* Bagian Tengah: Gelombang Suara Sejajar (Centered & Responsive) */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '3px',
+                      flex: 1,
+                      minWidth: 0,
+                      height: '36px',
+                      padding: '0 8px',
+                      overflow: 'hidden'
+                    }}>
+                      {audioVolumes.map((vol, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            width: '2.5px',
+                            height: `${vol}px`,
+                            backgroundColor: '#111827',
+                            borderRadius: '9999px',
+                            display: 'inline-block',
+                            transition: 'height 0.08s ease',
+                            opacity: 0.9,
+                            flexShrink: 0
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Sisi Kiri (End di RTL): Tombol Stop dan Tombol Kirim */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={handleStopListening}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          border: '2px solid #111827',
+                          backgroundColor: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          padding: 0,
+                          flexShrink: 0,
+                          transition: 'all 0.2s',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.backgroundColor = '#F3F4F6';
+                          e.currentTarget.style.transform = 'scale(1.06)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.backgroundColor = '#ffffff';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                        title="إنهاء التسجيل وتثبيت النص / Selesai merekam"
+                      >
+                        <div style={{
+                          width: '12px',
+                          height: '12px',
+                          backgroundColor: '#111827',
+                          borderRadius: '3px'
+                        }} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleCustomSubmit}
+                        className="icon-btn"
+                        style={{
+                          backgroundColor: 'var(--color-primary-600)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '36px',
+                          height: '36px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          paddingRight: '2px',
+                          flexShrink: 0,
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.backgroundColor = 'var(--color-primary-700)';
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.backgroundColor = 'var(--color-primary-600)';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                        title="إرسال"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)' }}>
+                          <line x1="22" y1="2" x2="11" y2="13"></line>
+                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <textarea 
+                      ref={textareaRef}
+                      className="main-input" 
+                      placeholder="كيف يمكنني مساعدتك في دراستك اليوم؟"
+                      rows={1}
+                      dir="auto"
+                      value={input}
+                      onChange={handleInput}
+                      onKeyDown={handleKeyDown}
+                    ></textarea>
+                    
+                    <div className="input-toolbar">
+                      <div className="toolbar-right">
+                        <button className="icon-btn" title="إرفاق ملف" onClick={() => fileInputRef.current?.click()}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                        </button>
+                        <button className="icon-btn" title="تحديد الكتاب" style={{ display: 'flex', gap: '6px', fontSize: '0.85rem', padding: '6px 12px', borderRadius: '16px', border: '1px solid #e2e8f0' }} onClick={() => setShowBooksModal(true)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                          تحديد المصدر
+                        </button>
+                      </div>
+
+                      <div className="toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={toggleListening}
+                          className="icon-btn"
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            color: '#6B7280',
+                            flexShrink: 0,
+                            transition: 'background-color 0.2s'
+                          }}
+                          title="تسجيل صوتي (إملاء) / Dikte Suara"
+                          onMouseOver={e => e.currentTarget.style.backgroundColor = '#F3F4F6'}
+                          onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="22"></line>
+                          </svg>
+                        </button>
+
+                        {input.trim().length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleCustomSubmit}
+                            className="icon-btn"
+                            style={{
+                              backgroundColor: 'var(--color-primary-600)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '36px',
+                              height: '36px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              paddingRight: '2px',
+                              transition: 'all 0.2s',
+                              flexShrink: 0
+                            }}
+                            onMouseOver={e => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-primary-700)';
+                              e.currentTarget.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseOut={e => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-primary-600)';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                            title="إرسال"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-135deg)' }}>
+                              <line x1="22" y1="2" x2="11" y2="13"></line>
+                              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {input.trim().length === 0 && (
@@ -1381,7 +2423,47 @@ export default function TalimAIWorkspace() {
       )}
 
       <style dangerouslySetInnerHTML={{__html: `
+        /* Voice Recording Pulse Animation */
+        @keyframes pulseRecord {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+          70% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        @keyframes blinkDot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Bouncing Dots Animation */
+        .typing-indicator { display: flex; gap: 6px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 12px; width: fit-content; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
+        .typing-indicator span { width: 6px; height: 6px; background: rgba(255,255,255,0.8); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        
+        /* Markdown block fade in animation */
+        .markdown-body > * { animation: fadeUp 0.4s ease-out forwards; }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Markdown Core Styles (Tables, Lists, Typography) */
+        .markdown-body { direction: inherit; text-align: start; }
+        .markdown-body p { margin: 0 0 0.7em 0; }
+        .markdown-body p:last-child { margin: 0; }
+        .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 1em; background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden; }
+        .markdown-body th, .markdown-body td { border: 1px solid rgba(255,255,255,0.2); padding: 10px 14px; }
+        .markdown-body th { background: rgba(255,255,255,0.15); font-weight: 700; }
+        .markdown-body ul, .markdown-body ol { margin: 0 0 1em 0; padding-inline-start: 1.5em; }
+        .markdown-body li { margin-bottom: 0.5em; }
+        .markdown-body li::marker { color: rgba(255,255,255,0.7); }
+        .markdown-body code { background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        .markdown-body pre { background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.1); }
+        .markdown-body pre code { background: transparent; padding: 0; font-size: 0.95em; }
+        .markdown-body blockquote { border-inline-start: 4px solid rgba(255,255,255,0.4); margin: 0 0 1em 0; padding-inline-start: 1em; opacity: 0.85; font-style: italic; }
       `}} />
     </div>
   );

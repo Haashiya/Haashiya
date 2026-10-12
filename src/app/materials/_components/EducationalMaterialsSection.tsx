@@ -1,0 +1,118 @@
+"use client";
+import React, { useEffect, useState } from 'react';
+
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  category: string;
+  meta: string;
+  coverUrl: string;
+  pdfUrl: string;
+}
+
+const CATEGORIES = [
+  { key: 'balagha', label: 'البلاغة' },
+  { key: 'qiraah', label: 'القراءة' },
+  { key: 'tawheed', label: 'التوحيد' },
+  { key: 'kitaba', label: 'الكتابة' },
+  { key: 'nahw', label: 'النحو' },
+  { key: 'adab', label: 'تاريخ الأدب' },
+  { key: 'indonesian', label: 'اللغة الإندونيسية' },
+];
+
+const toAbsolute = (url: string) => (url.startsWith('/') || url.startsWith('http') ? url : `/${url}`);
+
+export default function EducationalMaterialsSection() {
+  const [activeCategory, setActiveCategory] = useState('balagha');
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/books/educational')
+      .then((res) => {
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+          return [];
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setBooks(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setBooks([]);
+        setLoading(false);
+      });
+  }, []);
+
+  const filteredBooks = books.filter((book) => book.category === activeCategory);
+
+  return (
+    <section id="educational-materials" className="main-card-section">
+      <div className="section-header">
+        <h2 className="section-title">المواد التعليمية</h2>
+        <a 
+          href="/category-view?cat=educational" 
+          className="view-all-link" 
+        >
+          عرض الكل &rarr;
+        </a>
+      </div>
+  
+      {/* Category Filter Tabs */}
+      <div className="category-buttons">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.key}
+            className={`cat-btn ${activeCategory === cat.key ? 'active' : ''}`}
+            onClick={() => setActiveCategory(cat.key)}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+  
+      {/* Horizontal Book List Container */}
+      <div id="educationalBooksContainer" className="book-list-container">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="book-row-card" style={{ opacity: 0.7 }}>
+              <div className="book-row-right" style={{ width: '100%' }}>
+                <div className="skeleton-box" style={{ width: '56px', height: '80px', flexShrink: 0 }}></div>
+                <div className="book-row-details" style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, paddingRight: '12px' }}>
+                  <div className="skeleton-box" style={{ height: '16px', width: '70%' }}></div>
+                  <div className="skeleton-box" style={{ height: '12px', width: '40%' }}></div>
+                  <div className="skeleton-box" style={{ height: '10px', width: '50%' }}></div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : filteredBooks.length > 0 ? (
+          filteredBooks.map((book) => (
+            <div key={book.id} className="book-row-card">
+              <div className="book-row-right">
+                <img src={toAbsolute(book.coverUrl)} alt={book.title} className="book-row-cover" />
+                <div className="book-row-details">
+                  <h3 className="book-row-title">{book.title}</h3>
+                  <p className="book-row-author">{book.author}</p>
+                  <span className="book-row-meta">{book.meta}</span>
+                </div>
+              </div>
+              <div className="book-row-actions">
+                <a href={toAbsolute(book.pdfUrl)} target="_blank" rel="noreferrer" className="action-icon-btn" title="قراءة">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </a>
+                <a href={toAbsolute(book.pdfUrl)} download className="action-icon-btn" title="تحميل">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </a>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>لا توجد كتب في هذا القسم حالياً</div>
+        )}
+      </div>
+    </section>
+  );
+}

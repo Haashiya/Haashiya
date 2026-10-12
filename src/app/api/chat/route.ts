@@ -3,6 +3,7 @@ import { classifyDifficulty, streamTextWithFallback } from '@/lib/ai-router';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +17,17 @@ export async function POST(req: Request) {
     }
 
     // 1. 🛡️ Ubah UIMessages dari klien ke ModelMessages yang bisa dibaca streamText
-    const modelMessages = await convertToModelMessages(messages);
+    const sanitizedMessages = messages.map((m: any) => {
+      if ((!m.parts || !Array.isArray(m.parts)) && typeof m.content === 'string') {
+        return {
+          ...m,
+          parts: [{ type: 'text', text: m.content }],
+        };
+      }
+      return m;
+    });
+
+    const modelMessages = await convertToModelMessages(sanitizedMessages);
 
     // Ambil pesan terakhir dari user
     const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
@@ -32,7 +43,12 @@ export async function POST(req: Request) {
     // 3. 🔄 Jalankan Streaming dengan 3 Fallback AI Candidate di Tier tersebut
     const result = await streamTextWithFallback(difficultyLevel, modelMessages);
 
-    return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse({
+      onError: (err: any) => {
+        console.error('[API Chat Stream Error]', err?.message || err);
+        return `Maaf, terjadi kendala saat memproses jawaban AI: ${err?.message || 'Koneksi terputus'}. Pastikan saldo API mencukupi.`;
+      }
+    });
   } catch (error: any) {
     console.error('AI Error:', error);
     return new Response(JSON.stringify({ 

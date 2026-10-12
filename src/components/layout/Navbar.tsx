@@ -4,9 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useModals } from '@/contexts/ModalContext';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { openNotifications, openLogout } = useModals();
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Buka dropdown sesuai dengan halaman saat ini
@@ -212,9 +214,7 @@ export default function Navbar() {
 
                   <button onClick={() => {
                     setIsProfileOpen(false);
-                    if (typeof window !== 'undefined' && (window as any).openNotificationsModal) {
-                      (window as any).openNotificationsModal();
-                    }
+                    openNotifications();
                   }} style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -241,11 +241,8 @@ export default function Navbar() {
                   <div style={{ height: '1px', backgroundColor: '#D1D5DB', margin: '4px 0' }}></div>
 
                   <button onClick={() => {
-                    localStorage.removeItem('currentUser'); localStorage.removeItem('authToken');
-                    setIsLoggedIn(false);
                     setIsProfileOpen(false);
-                    setUserData(null);
-                    window.location.href = '/login';
+                    openLogout();
                   }} style={{
                     display: 'flex',
                     alignItems: 'center',

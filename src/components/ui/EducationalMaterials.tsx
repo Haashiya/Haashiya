@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import '@/styles/dashboard.css';
 
 interface Book {
   id: string;
@@ -61,7 +62,7 @@ export default function EducationalMaterials() {
         overflow: 'hidden',
       }}
     >
-      <link rel="stylesheet" href="/dashboard.css" />
+
       <style>{`
         @keyframes pulseSkeleton {
           0%, 100% { opacity: 1; }
